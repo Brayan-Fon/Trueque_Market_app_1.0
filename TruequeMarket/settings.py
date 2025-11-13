@@ -10,11 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-v83ius^1-aq&lzzgix14p&un-$9v7$6y@t26q%!0#pr1&@*5oq')
 
 DEBUG = os.getenv('DEBUG', 'True') == 'True'  # En local True, en Render usa False
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'trueque-market-app-1-0.onrender.com',
-]
+ALLOWED_HOSTS = import socket
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME, 'localhost', '127.0.0.1']
+else:
+    ALLOWED_HOSTS = ['*']
 
 # ==============================
 # APLICACIONES INSTALADAS
