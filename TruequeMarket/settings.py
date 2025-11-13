@@ -10,7 +10,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-v83ius^1-aq&lzzgix14p&un-$9v7$6y@t26q%!0#pr1&@*5oq')
 
 DEBUG = os.getenv('DEBUG', 'True') == 'True'  # En local True, en Render usa False
-ALLOWED_HOSTS = ['*']  # Puedes dejarlo así o usar tu dominio de Render
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'trueque-market-app-1-0.onrender.com',
+]
 
 # ==============================
 # APLICACIONES INSTALADAS
