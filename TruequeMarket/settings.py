@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import socket  # ✅ CORRECTO: import aquí
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -10,8 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-v83ius^1-aq&lzzgix14p&un-$9v7$6y@t26q%!0#pr1&@*5oq')
 
 DEBUG = os.getenv('DEBUG', 'True') == 'True'  # En local True, en Render usa False
-ALLOWED_HOSTS = import socket
 
+# ✅ CORREGIDO: No se usa "import socket" aquí
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
 if RENDER_EXTERNAL_HOSTNAME:
