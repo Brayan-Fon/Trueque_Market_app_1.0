@@ -1,2 +1,3 @@
-web: gunicorn TruequeMarket.wsgi
+web: gunicorn TruequeMarket.wsgi:application
+
 
