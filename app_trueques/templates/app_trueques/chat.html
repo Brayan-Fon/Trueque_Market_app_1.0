@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/chat.css' %}">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+                <h1>Trueque Market</h1>
+            </div>
+            <div class="nav-right">
+                <span>💬 Chateando con <strong>{{ propietario.username }}</strong></span>
+                <a href="{% url 'mis_chats' %}" class="btn-volver">💬 Mis Chats</a>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
+                
+            </div>
+        </div>
+    </header>
+
+    <!-- CHAT -->
+    <main class="chat-container">
+        <div class="chat-header">
+            <h2>Conversación sobre: <span class="producto-nombre">{{ producto.nombre }}</span></h2>
+        </div>
+
+        <div class="messages-box" id="messagesBox">
+            {% for mensaje in mensajes %}
+                <div class="message {% if mensaje.emisor == user %}sent{% else %}received{% endif %}">
+                    <span>
+                        {% if mensaje.emisor == user %}
+                            Tú:
+                        {% else %}
+                            {{ mensaje.emisor.username }}:
+                        {% endif %}
+                        {{ mensaje.contenido }}
+                    </span>
+                </div>
+            {% empty %}
+                <p class="no-messages">No hay mensajes aún. ¡Inicia la conversación! 💬</p>
+            {% endfor %}
+        </div>
+
+        <form method="POST" class="send-box" id="chatForm">
+            {% csrf_token %}
+            <input type="text" name="mensaje" id="mensajeInput" placeholder="Escribe tu mensaje..." autocomplete="off" required>
+            <button type="submit">Enviar 🚀</button>
+        </form>
+
+        <div class="chat-actions">
+            <a href="{% url 'marketplace' %}" class="btn-volver">⬅️ Volver al Marketplace</a>
+        </div>
+    </main>
+
+    <!-- SCRIPT PARA SCROLL Y ACTUALIZACIÓN AUTOMÁTICA -->
+    <script>
+        const messagesBox = document.getElementById('messagesBox');
+
+        // Función para hacer scroll al último mensaje
+        function scrollToBottom() {
+            messagesBox.scrollTop = messagesBox.scrollHeight;
+        }
+
+        scrollToBottom();
+
+        // Actualización automática cada 2 segundos
+        async function actualizarMensajes() {
+            try {
+                const response = await fetch(window.location.href, {
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                });
+                const text = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const nuevosMensajes = doc.getElementById('messagesBox').innerHTML;
+                messagesBox.innerHTML = nuevosMensajes;
+                scrollToBottom();
+            } catch (err) {
+                console.error('Error al actualizar mensajes:', err);
+            }
+        }
+
+        setInterval(actualizarMensajes, 2000); // cada 2 segundos
+
+        // Scroll al enviar mensaje sin recargar
+        const chatForm = document.getElementById('chatForm');
+        chatForm.addEventListener('submit', () => {
+            setTimeout(scrollToBottom, 100);
+        });
+    </script>
+<script>
+    // Baja automáticamente al último mensaje
+    window.onload = function() {
+        const chatContainer = document.querySelector('.chat-mensajes');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Chats - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/mis_chats.css' %}">
+</head>
+<body>
+
+    <header class="header-chat">
+        <h1>💬 Mis Chats</h1>
+        <a href="{% url 'marketplace' %}" class="btn-volver">⬅️ Marketplace</a>
+    </header>
+
+    <main class="chat-list-container">
+        {% if chats %}
+            {% for chat in chats %}
+                <a href="{% url 'chat' chat.producto.id %}" class="chat-item">
+                    <div class="chat-info">
+                        <span class="chat-producto">{{ chat.producto.nombre }}</span>
+                        <span class="chat-usuario">Con: {{ chat.otro_usuario.username }}</span>
+                        <span class="chat-ultimo">{{ chat.ultimo_mensaje|truncatechars:40 }}</span>
+                    </div>
+                    <div class="chat-fecha">{{ chat.fecha|date:"d/m/Y H:i" }}</div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <p class="no-chats">No tienes chats todavía. 💬</p>
+        {% endif %}
+    </main>
+
+</body>
+</html>

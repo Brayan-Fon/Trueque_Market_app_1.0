@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/login.css' %}">
+    <style>
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .toggle-password svg {
+            width: 22px;
+            height: 22px;
+            fill: #555;
+            transition: 0.3s;
+        }
+
+        .toggle-password:hover svg {
+            fill: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-background">
+        <div class="login-card">
+            <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+            <h2>Iniciar Sesión</h2>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Usuario" required>
+
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Contraseña" required>
+                    <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+                        <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5C21.27 8.11 17 4.5 12 4.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+                        </svg>
+                        <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display:none">
+                            <path d="M12 6a9.77 9.77 0 0 1 9 6 9.77 9.77 0 0 1-9 6 9.77 9.77 0 0 1-9-6 9.77 9.77 0 0 1 9-6m0-2C6 4 1.73 7.61 0 12c1.73 4.39 6 8 12 8s10.27-3.61 12-8c-1.73-4.39-6-8-12-8m0 5a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>
+                            <line x1="2" y1="2" x2="22" y2="22" stroke="#555" stroke-width="2"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-submit">Ingresar</button>
+            </form>
+            <p>¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a></p>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(id, btn) {
+            const input = document.getElementById(id);
+            const eyeOpen = btn.querySelector('.eye-open');
+            const eyeClosed = btn.querySelector('.eye-closed');
+            
+            if (input.type === "password") {
+                input.type = "text";
+                eyeOpen.style.display = "none";
+                eyeClosed.style.display = "block";
+            } else {
+                input.type = "password";
+                eyeOpen.style.display = "block";
+                eyeClosed.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

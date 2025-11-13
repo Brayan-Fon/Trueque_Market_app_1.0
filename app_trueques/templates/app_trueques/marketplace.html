@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/marketplace.css' %}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+                <h1>Trueque Market</h1>
+            </div>
+            <div class="nav-right">
+                <span>Hola, {{ user.username }}</span>
+                <a href="{% url 'mis_chats' %}" class="btn-volver">💬 Mis Chats</a>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="actions">
+            <a href="{% url 'agregar_producto' %}" class="btn-primary">Agregar Producto</a>
+            <a href="{% url 'inicio' %}" class="btn-secondary">Volver a Inicio</a>
+        </div>
+
+        <section class="productos-grid">
+    {% for producto in productos %}
+    <div class="producto-card">
+        {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+        {% else %}
+            <img src="{% static 'app_trueques/img/no-image.png' %}" alt="Sin imagen">
+        {% endif %}
+        
+        <h3>{{ producto.nombre }}</h3>
+        <p>{{ producto.descripcion|truncatechars:100 }}</p>
+        <p class="propietario">Publicado por: <strong>{{ producto.propietario.username }}</strong></p>
+
+        <div class="botones-producto">
+            <a href="{% url 'producto_detalle' producto.id %}" class="btn-ver">🔍 Ver Detalle</a>
+            <a href="{% url 'chat' producto.id %}" class="btn-oferta">💬 Mandar Oferta</a>
+        </div>
+    </div>
+    {% empty %}
+    <p>No hay productos para mostrar.</p>
+    {% endfor %}
+</section>
+
+    </main>
+</body>
+</html>

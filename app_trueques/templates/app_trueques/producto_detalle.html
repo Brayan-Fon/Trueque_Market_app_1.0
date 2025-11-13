@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ producto.nombre }} - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+                <h1>Trueque Market</h1>
+            </div>
+            <div class="nav-right">
+                <span>Hola, {{ user.username }}</span>
+                <a href="{% url 'mis_chats' %}" class="btn-volver">💬 Mis Chats</a>
+                <a href="{% url 'logout' %}" class="btn btn-logout">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="detalle-container">
+        <div class="detalle-card">
+            {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="detalle-imagen">
+            {% else %}
+                <img src="{% static 'app_trueques/img/placeholder.png' %}" alt="Sin imagen" class="detalle-imagen">
+            {% endif %}
+
+            <div class="detalle-info">
+                <h2>{{ producto.nombre }}</h2>
+                <p>{{ producto.descripcion }}</p>
+                <p><strong>Publicado por:</strong> {{ producto.propietario.username }}</p>
+                <div class="detalle-botones">
+                    <a href="{% url 'chat' producto.id %}" class="btn-primary">Mandar oferta</a>
+                    <a href="{% url 'marketplace' %}" class="btn-secondary">Volver al Marketplace</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

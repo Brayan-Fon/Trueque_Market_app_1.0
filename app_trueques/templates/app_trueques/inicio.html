@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/inicio.css' %}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+                <h1>Trueque Market</h1>
+            </div>
+            <div class="nav-right">
+                <span>Hola, {{ user.username }}</span>
+                <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
+                <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
+                
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="welcome-section">
+            <div class="welcome-card">
+                <h2>¡Bienvenido a Trueque Market!</h2>
+                <p>Explora, comparte y realiza trueques de manera fácil y segura.</p>
+                <a href="{% url 'marketplace' %}" class="btn-primary">Explorar Trueques</a>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="card">
+                <h3>Trueques recientes</h3>
+                <p>Mira las últimas oportunidades de intercambio de los usuarios.</p>
+            </div>
+            <div class="card">
+                <h3>Tu perfil</h3>
+                <p>Administra tus publicaciones y configura tu información.</p>
+            </div>
+            <div class="card">
+                <h3>Comunidad</h3>
+                <p>Conéctate con otros usuarios y comparte tus conocimientos.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

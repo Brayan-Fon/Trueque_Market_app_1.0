@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Producto - Trueque Market</title>
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/agregar_producto.css' %}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo-title">
+                <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+                <h1>Trueque Market</h1>
+            </div>
+            <div class="nav-right">
+                <span>Hola, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2>Agregar Producto</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="text" name="nombre" placeholder="Nombre del producto" required>
+                <textarea name="descripcion" placeholder="Descripción del producto" required></textarea>
+                <input type="file" name="imagen" accept="image/*" required>
+                <button type="submit" class="btn-submit">Agregar Producto</button>
+            </form>
+            <a href="{% url 'marketplace' %}" class="btn-secondary">Volver al Marketplace</a>
+        </div>
+    </main>
+</body>
+</html>
