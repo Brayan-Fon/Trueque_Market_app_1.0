@@ -30,7 +30,7 @@ db.sqlite3
 # ARCHIVOS ESTÁTICOS Y MEDIA
 # ==============================
 media/
-staticfiles/
+#staticfiles/
 static/
 
 # ==============================

@@ -1,0 +1,147 @@
+/* ====== Global ====== */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8; /* color más suave y moderno */
+    color: #333;
+    background-image: url('../img/fondo_inicio.jpg'); /* ruta de tu imagen de fondo */
+    background-size: cover; /* hace que la imagen cubra todo el fondo */
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* ====== Header ====== */
+header {
+    background-color: #1E3A8A; /* azul oscuro más elegante que el verde */
+    color: white;
+    padding: 15px 30px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logout-btn {
+    background-color: #e74c3c; /* rojo para cerrar sesión */
+    padding: 8px 15px;
+    border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b; /* rojo oscuro al pasar el mouse */
+}
+
+/* ====== Welcome Section ====== */
+.welcome-section {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    text-align: center;
+}
+
+.welcome-card {
+    background: rgba(255, 255, 255, 0.9); /* ligeramente transparente para ver fondo */
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.welcome-card h2 {
+    margin-bottom: 15px;
+    font-size: 2rem;
+    color: #1E3A8A;
+}
+
+.btn-action {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #3B82F6; /* azul moderno */
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: background 0.3s ease;
+}
+
+.btn-action:hover {
+    background-color: #2563EB; /* azul más oscuro al hover */
+}
+
+/* ====== Features Section ====== */
+.features-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.card {
+    background: white;
+    flex: 1;
+    min-width: 250px;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.card h3 {
+    margin-bottom: 10px;
+    color: #1E3A8A; /* azul oscuro consistente con header */
+}
+/*FONDO DE INICIO*/
+
+body {
+    background-color: #f9f9f9;
+    background-image: url("../img/fondo_inicio.png");
+    background-repeat: repeat;
+    background-size: 180px; /* Ajusta el tamaño del logo */
+    background-attachment: fixed;
+    animation: moverFondo 40s linear infinite;
+}
+
+/* Movimiento sutil en diagonal */
+@keyframes moverFondo {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 300px -300px; /* movimiento diagonal */
+    }
+}
+
+/* Capa blanca translúcida para suavizar */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+    z-index: -1;
+}

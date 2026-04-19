@@ -1,0 +1,56 @@
+/* agregar_producto.css */
+
+.form-container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #004aad;
+}
+
+.form-container input,
+.form-container textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.btn-submit {
+    width: 100%;
+    background: #004aad;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-submit:hover {
+    background: #00307a;
+}
+
+.btn-secondary {
+    display: block;
+    margin-top: 10px;
+    text-align: center;
+    text-decoration: none;
+    color: #004aad;
+    border: 1px solid #004aad;
+    padding: 8px 15px;
+    border-radius: 5px;
+}
+
+.btn-secondary:hover {
+    background: #004aad;
+    color: white;
+}

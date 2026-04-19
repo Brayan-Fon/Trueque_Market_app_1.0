@@ -1,0 +1,374 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f4f8;
+    color: #374151;
+}
+
+/* -----------------------------
+   HEADER GLOBAL
+   ----------------------------- */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1E3A8A; /* Azul oscuro */
+    color: white;
+    padding: 10px 20px;
+}
+
+.logo-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-right span {
+    font-weight: bold;
+}
+
+/* -----------------------------
+   BOTÓN DE CERRAR SESIÓN
+   ----------------------------- */
+.nav-right .btn {
+    background-color: #e74c3c; /* rojo */
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.nav-right .btn:hover {
+    background-color: #c0392b; /* rojo más oscuro al pasar el mouse */
+}
+
+/* -----------------------------
+   BOTONES GENERALES
+   ----------------------------- */
+.btn-primary, .btn-secondary, .btn-submit {
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary {
+    background-color: #3B82F6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563EB;
+}
+
+.btn-secondary {
+    background-color: #6B7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4B5563;
+}
+
+.btn-submit {
+    background-color: #3B82F6;
+    color: white;
+    border: none;
+}
+
+.btn-submit:hover {
+    background-color: #2563EB;
+}
+
+/* -----------------------------
+   FORMULARIOS
+   ----------------------------- */
+.form-container {
+    max-width: 500px;
+    margin: 40px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+}
+
+.form-container h2 {
+    margin-bottom: 20px;
+    color: #1E3A8A;
+    text-align: center;
+}
+
+.form-container input[type="text"],
+.form-container input[type="email"],
+.form-container input[type="password"],
+.form-container textarea,
+.form-container input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #d1d5db;
+}
+
+.form-container textarea {
+    resize: vertical;
+}
+
+/* -----------------------------
+   GRID DE PRODUCTOS
+   ----------------------------- */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.producto-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.producto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 8px 12px rgba(0,0,0,0.15);
+}
+
+.producto-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.producto-card h3 {
+    margin: 10px;
+    color: #1E3A8A;
+}
+
+.producto-card p {
+    margin: 0 10px 10px 10px;
+}
+
+.producto-card .propietario {
+    font-size: 0.85rem;
+    color: #6B7280;
+}
+
+/* -----------------------------
+   SECCIONES DE BIENVENIDA
+   ----------------------------- */
+.welcome-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.welcome-card {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.welcome-card h2 {
+    color: #1E3A8A;
+    margin-bottom: 10px;
+}
+
+.welcome-card p {
+    color: #374151;
+    margin-bottom: 20px;
+}
+
+.welcome-card .btn-action {
+    background-color: #3B82F6;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.welcome-card .btn-action:hover {
+    background-color: #2563EB;
+}
+
+/* -----------------------------
+   CARDS DE FUNCIONALIDADES
+   ----------------------------- */
+.features-section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.features-section .card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    width: 250px;
+    text-align: center;
+}
+
+.features-section .card h3 {
+    color: #1E3A8A;
+    margin-bottom: 10px;
+}
+
+/* ===========================
+   DETALLE DE PRODUCTO
+   =========================== */
+.detalle-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+}
+
+.detalle-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.detalle-imagen {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+    border-bottom: 3px solid #1E3A8A;
+}
+
+.detalle-info {
+    padding: 20px;
+}
+
+.detalle-info h2 {
+    color: #1E3A8A;
+}
+
+.detalle-botones {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* ===========================
+   CHAT DE NEGOCIACIÓN
+   =========================== */
+.chat-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+}
+
+.chat-box {
+    background-color: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 600px;
+}
+
+.mensajes {
+    border: 1px solid #ddd;
+    padding: 15px;
+    height: 250px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.mensaje.otro {
+    background-color: #f0f4f8;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.form-chat {
+    display: flex;
+    gap: 10px;
+}
+
+.form-chat input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.chat-volver {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.resaltado {
+    color: #1E3A8A;
+    font-weight: bold;
+}
+
+/* Botón de cerrar sesión rojo */
+.btn-logout {
+    background-color: #dc2626 !important;
+}
+
+.btn-logout:hover {
+    background-color: #b91c1c !important;
+}
+
+/* BOTÓN MIS CHATS */
+.btn-mis-chats {
+    text-decoration: none;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.btn-mis-chats:hover {
+    background: linear-gradient(135deg, #0ea5e9, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+}
