@@ -1,6 +1,5 @@
 from pathlib import Path
 import os
-import socket  # ✅ CORRECTO: import aquí
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -8,20 +7,29 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ==============================
+# CONFIGURACIÓN BÁSICA
+# ==============================
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-v83ius^1-aq&lzzgix14p&un-$9v7$6y@t26q%!0#pr1&@*5oq')
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'  # En local True, en Render usa False
-
-# ✅ CORREGIDO: No se usa "import socket" aquí
+# ==============================
+# ALLOWED_HOSTS
+# ==============================
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME, 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = [
+        RENDER_EXTERNAL_HOSTNAME,
+        'trueque-market-app-1-0.onrender.com',  # ✅ lo añadimos explícitamente
+        'localhost',
+        '127.0.0.1',
+    ]
 else:
-    ALLOWED_HOSTS = ['*']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # ==============================
-# APLICACIONES INSTALADAS
+# APLICACIONES
 # ==============================
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -38,8 +46,7 @@ INSTALLED_APPS = [
 # ==============================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # WhiteNoise debe ir justo después de SecurityMiddleware
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ debe ir justo después del SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -48,15 +55,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ==============================
+# TEMPLATES
+# ==============================
 ROOT_URLCONF = 'TruequeMarket.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  # opcional
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -78,7 +89,7 @@ DATABASES = {
 }
 
 # ==============================
-# VALIDACIÓN DE CONTRASEÑAS
+# VALIDADORES DE CONTRASEÑA
 # ==============================
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -96,13 +107,13 @@ USE_I18N = True
 USE_TZ = True
 
 # ==============================
-# ARCHIVOS ESTÁTICOS Y MEDIOS
+# ARCHIVOS ESTÁTICOS Y MEDIA
 # ==============================
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # opcional, si tienes carpeta global
+STATICFILES_DIRS = [BASE_DIR / 'app_trueques' / 'static']  # ✅ ruta correcta
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise servirá los estáticos en Render
+# WhiteNoise para servir estáticos en Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'

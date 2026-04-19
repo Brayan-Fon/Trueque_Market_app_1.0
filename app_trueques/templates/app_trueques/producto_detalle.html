@@ -6,8 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ producto.nombre }} - Trueque Market</title>
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/producto_detalle.css' %}">
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
+
     <header>
         <div class="header-container">
             <div class="logo-title">
@@ -15,31 +20,78 @@
                 <h1>Trueque Market</h1>
             </div>
             <div class="nav-right">
-                <span>Hola, {{ user.username }}</span>
-                <a href="{% url 'mis_chats' %}" class="btn-volver">💬 Mis Chats</a>
-                <a href="{% url 'logout' %}" class="btn btn-logout">Cerrar sesión</a>
+                <a href="{% url 'marketplace' %}" class="btn">← Volver al marketplace</a>
+                <a href="{% url 'mis_chats' %}" class="btn">💬 Mis Chats</a>
+                <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
             </div>
         </div>
     </header>
 
     <main class="detalle-container">
-        <div class="detalle-card">
-            {% if producto.imagen %}
-                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="detalle-imagen">
-            {% else %}
-                <img src="{% static 'app_trueques/img/placeholder.png' %}" alt="Sin imagen" class="detalle-imagen">
-            {% endif %}
 
+        <div class="detalle-card">
+
+            <!-- Imagen del producto -->
+            <div class="detalle-imagen">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                {% else %}
+                    <div class="sin-imagen">📦 Sin imagen</div>
+                {% endif %}
+            </div>
+
+            <!-- Info del producto -->
             <div class="detalle-info">
                 <h2>{{ producto.nombre }}</h2>
-                <p>{{ producto.descripcion }}</p>
-                <p><strong>Publicado por:</strong> {{ producto.propietario.username }}</p>
-                <div class="detalle-botones">
-                    <a href="{% url 'chat' producto.id %}" class="btn-primary">Mandar oferta</a>
-                    <a href="{% url 'marketplace' %}" class="btn-secondary">Volver al Marketplace</a>
+                <p class="detalle-desc">{{ producto.descripcion }}</p>
+
+                <div class="detalle-meta">
+                    <p>👤 Publicado por <strong>{{ producto.propietario.username }}</strong></p>
+                    <p>📅 {{ producto.fecha_creacion|date:"d/m/Y" }}</p>
                 </div>
+
+                {% if producto.propietario != request.user %}
+                    <a href="{% url 'chat' producto.id %}" class="btn-chat">
+                        💬 Contactar para trueque
+                    </a>
+                {% else %}
+                    <p class="es-tuyo">✅ Este es tu producto</p>
+                {% endif %}
             </div>
         </div>
+
+        <!-- MAPA DE UBICACIÓN -->
+        <div class="detalle-mapa">
+            <h3>📍 Ubicación del producto</h3>
+
+            {% if producto.latitud and producto.longitud %}
+                <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 14px;"></div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const lat = {{ producto.latitud }};
+                        const lng = {{ producto.longitud }};
+
+                        const mapa = L.map('mapa').setView([lat, lng], 15);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(mapa);
+
+                        L.marker([lat, lng])
+                            .addTo(mapa)
+                            .bindPopup(`
+                                <b>{{ producto.nombre }}</b><br>
+                                Publicado por <b>{{ producto.propietario.username }}</b>
+                            `)
+                            .openPopup();
+                    });
+                </script>
+            {% else %}
+                <p class="sin-ubicacion">⚠️ Este producto no tiene ubicación registrada.</p>
+            {% endif %}
+        </div>
+
     </main>
+
 </body>
 </html>

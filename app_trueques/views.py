@@ -79,12 +79,16 @@ def agregar_producto_view(request):
         nombre = request.POST['nombre']
         descripcion = request.POST['descripcion']
         imagen = request.FILES.get('imagen')
+        latitud = request.POST.get('latitud') or None
+        longitud = request.POST.get('longitud') or None
 
         Producto.objects.create(
             nombre=nombre,
             descripcion=descripcion,
             imagen=imagen,
-            propietario=request.user
+            propietario=request.user,
+            latitud=latitud,
+            longitud=longitud,
         )
         messages.success(request, '✅ Producto agregado correctamente')
         return redirect('marketplace')
@@ -102,14 +106,13 @@ def producto_detalle_view(request, producto_id):
 
 
 # ======================
-# VISTA DE CHAT ENTRE USUARIOS
+# VISTA DE CHAT
 # ======================
 @login_required
 def chat_view(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     propietario = producto.propietario
 
-    # Si el usuario es el propietario, buscar con quién está hablando
     if propietario == request.user:
         ultimo_mensaje = Mensaje.objects.filter(
             producto=producto,
@@ -124,14 +127,12 @@ def chat_view(request, producto_id):
     else:
         otro_usuario = propietario
 
-    # Cargar mensajes entre ambos usuarios
     mensajes = Mensaje.objects.filter(
         producto=producto,
         emisor__in=[request.user, otro_usuario],
         receptor__in=[request.user, otro_usuario]
     ).order_by('fecha_envio')
 
-    # Enviar mensaje
     if request.method == 'POST':
         contenido = request.POST.get('mensaje')
         if contenido and contenido.strip():
@@ -158,7 +159,6 @@ def chat_view(request, producto_id):
 def mis_chats_view(request):
     user = request.user
 
-    # Obtener todos los mensajes donde el usuario participa
     chats = Mensaje.objects.filter(Q(emisor=user) | Q(receptor=user))
 
     chat_agrupados = {}

@@ -22,6 +22,10 @@ class Producto(models.Model):
     propietario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
+    # Ubicación del producto
+    latitud = models.FloatField(null=True, blank=True)
+    longitud = models.FloatField(null=True, blank=True)
+
     def __str__(self):
         return self.nombre
 
@@ -37,7 +41,7 @@ class Mensaje(models.Model):
     fecha_envio = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['fecha_envio']  # los mensajes se muestran en orden cronológico
+        ordering = ['fecha_envio']
 
     def __str__(self):
         return f'{self.emisor.username} → {self.receptor.username}: {self.contenido[:30]}'

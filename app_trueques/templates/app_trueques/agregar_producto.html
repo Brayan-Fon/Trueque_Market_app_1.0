@@ -7,8 +7,12 @@
     <title>Agregar Producto - Trueque Market</title>
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/agregar_producto.css' %}">
+    <!-- Leaflet para preview del mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
+
     <header>
         <div class="header-container">
             <div class="logo-title">
@@ -16,24 +20,107 @@
                 <h1>Trueque Market</h1>
             </div>
             <div class="nav-right">
-                <span>Hola, {{ user.username }}</span>
+                <a href="{% url 'marketplace' %}" class="btn">← Volver</a>
                 <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
             </div>
         </div>
     </header>
 
-    <main>
-        <div class="form-container">
-            <h2>Agregar Producto</h2>
-            <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="text" name="nombre" placeholder="Nombre del producto" required>
-                <textarea name="descripcion" placeholder="Descripción del producto" required></textarea>
-                <input type="file" name="imagen" accept="image/*" required>
-                <button type="submit" class="btn-submit">Agregar Producto</button>
-            </form>
-            <a href="{% url 'marketplace' %}" class="btn-secondary">Volver al Marketplace</a>
-        </div>
+    <main class="form-container">
+        <h2>📦 Publicar nuevo producto</h2>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="nombre">Nombre del producto</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Ej: Bicicleta de montaña" required>
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <textarea id="descripcion" name="descripcion" placeholder="Describe tu producto y qué buscas a cambio..." rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="imagen">Imagen del producto</label>
+                <input type="file" id="imagen" name="imagen" accept="image/*">
+            </div>
+
+            <!-- Campos ocultos de ubicación -->
+            <input type="hidden" name="latitud" id="latitud">
+            <input type="hidden" name="longitud" id="longitud">
+
+            <!-- Sección de ubicación -->
+            <div class="form-group">
+                <label>📍 Ubicación del producto</label>
+                <button type="button" id="btn-ubicacion" class="btn-ubicacion">
+                    📍 Detectar mi ubicación
+                </button>
+                <p id="ubicacion-status" class="ubicacion-status"></p>
+                <!-- Preview del mapa -->
+                <div id="mapa-preview" style="display:none; height:250px; border-radius:12px; margin-top:12px;"></div>
+            </div>
+
+            <button type="submit" class="btn-submit">✅ Publicar producto</button>
+        </form>
     </main>
+
+    <script>
+        let mapa = null;
+        let marcador = null;
+
+        document.getElementById('btn-ubicacion').addEventListener('click', function () {
+            const status = document.getElementById('ubicacion-status');
+            status.textContent = '🔍 Detectando ubicación...';
+            status.style.color = '#555';
+
+            if (!navigator.geolocation) {
+                status.textContent = '❌ Tu navegador no soporta geolocalización.';
+                status.style.color = 'red';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+
+                    document.getElementById('latitud').value = lat;
+                    document.getElementById('longitud').value = lng;
+
+                    status.textContent = '✅ Ubicación detectada correctamente.';
+                    status.style.color = 'green';
+
+                    // Mostrar preview del mapa
+                    const mapaDiv = document.getElementById('mapa-preview');
+                    mapaDiv.style.display = 'block';
+
+                    if (!mapa) {
+                        mapa = L.map('mapa-preview').setView([lat, lng], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors'
+                        }).addTo(mapa);
+                        marcador = L.marker([lat, lng]).addTo(mapa)
+                            .bindPopup('📍 Ubicación de tu producto').openPopup();
+                    } else {
+                        mapa.setView([lat, lng], 15);
+                        marcador.setLatLng([lat, lng]);
+                    }
+                },
+                function () {
+                    status.textContent = '❌ No se pudo obtener la ubicación. Verifica los permisos.';
+                    status.style.color = 'red';
+                }
+            );
+        });
+    </script>
+
 </body>
 </html>
