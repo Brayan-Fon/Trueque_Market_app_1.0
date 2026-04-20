@@ -4,13 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - Trueque Market</title>
+    <title>Chat - {{ producto.nombre }}</title>
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/chat.css' %}">
 </head>
 <body>
 
-    <!-- HEADER -->
     <header>
         <div class="header-container">
             <div class="logo-title">
@@ -18,93 +17,108 @@
                 <h1>Trueque Market</h1>
             </div>
             <div class="nav-right">
-                <span>💬 Chateando con <strong>{{ propietario.username }}</strong></span>
-                <a href="{% url 'mis_chats' %}" class="btn-volver">💬 Mis Chats</a>
-                <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
-                
+                <a href="{% url 'mis_chats' %}" class="btn">← Mis Chats</a>
+                <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
             </div>
         </div>
     </header>
 
-    <!-- CHAT -->
     <main class="chat-container">
+
         <div class="chat-header">
-            <h2>Conversación sobre: <span class="producto-nombre">{{ producto.nombre }}</span></h2>
+            <h2>💬 Chat sobre: <strong>{{ producto.nombre }}</strong></h2>
+            <p>Hablando con <strong>{{ otro_usuario.username }}</strong></p>
         </div>
 
-        <div class="messages-box" id="messagesBox">
+        <!-- Historial de mensajes -->
+        <div class="chat-mensajes" id="chat-mensajes">
             {% for mensaje in mensajes %}
-                <div class="message {% if mensaje.emisor == user %}sent{% else %}received{% endif %}">
-                    <span>
-                        {% if mensaje.emisor == user %}
-                            Tú:
-                        {% else %}
-                            {{ mensaje.emisor.username }}:
-                        {% endif %}
-                        {{ mensaje.contenido }}
-                    </span>
+                <div class="mensaje {% if mensaje.emisor == request.user %}propio{% else %}otro{% endif %}">
+                    <span class="mensaje-usuario">{{ mensaje.emisor.username }}</span>
+                    <p class="mensaje-contenido">{{ mensaje.contenido }}</p>
+                    <span class="mensaje-hora">{{ mensaje.fecha_envio|date:"H:i" }}</span>
                 </div>
             {% empty %}
-                <p class="no-messages">No hay mensajes aún. ¡Inicia la conversación! 💬</p>
+                <p class="sin-mensajes" id="sin-mensajes">Aún no hay mensajes. ¡Sé el primero en escribir! 👋</p>
             {% endfor %}
         </div>
 
-        <form method="POST" class="send-box" id="chatForm">
-            {% csrf_token %}
-            <input type="text" name="mensaje" id="mensajeInput" placeholder="Escribe tu mensaje..." autocomplete="off" required>
-            <button type="submit">Enviar 🚀</button>
-        </form>
-
-        <div class="chat-actions">
-            <a href="{% url 'marketplace' %}" class="btn-volver">⬅️ Volver al Marketplace</a>
+        <!-- Input para enviar mensaje -->
+        <div class="chat-input">
+            <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+            <button id="btn-enviar">Enviar ➤</button>
         </div>
+
     </main>
 
-    <!-- SCRIPT PARA SCROLL Y ACTUALIZACIÓN AUTOMÁTICA -->
+    <!-- Pusher JS -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
     <script>
-        const messagesBox = document.getElementById('messagesBox');
+        const productoId = "{{ producto.id }}";
+        const usuarioActual = "{{ request.user.username }}";
+        const csrfToken = "{{ csrf_token }}";
+        const enviarUrl = "{% url 'enviar_mensaje' producto.id %}";
 
-        // Función para hacer scroll al último mensaje
-        function scrollToBottom() {
-            messagesBox.scrollTop = messagesBox.scrollHeight;
+        // Inicializar Pusher
+        const pusher = new Pusher("{{ pusher_key }}", {
+            cluster: "{{ pusher_cluster }}"
+        });
+
+        // Suscribirse al canal del chat
+        const channel = pusher.subscribe(`chat-${productoId}`);
+
+        const contenedor = document.getElementById('chat-mensajes');
+        const input = document.getElementById('input-mensaje');
+
+        // Scroll al último mensaje
+        contenedor.scrollTop = contenedor.scrollHeight;
+
+        // Escuchar mensajes en tiempo real
+        channel.bind('nuevo-mensaje', function(data) {
+            const sinMensajes = document.getElementById('sin-mensajes');
+            if (sinMensajes) sinMensajes.remove();
+
+            const div = document.createElement('div');
+            const esMio = data.emisor === usuarioActual;
+            div.classList.add('mensaje', esMio ? 'propio' : 'otro');
+
+            const ahora = new Date();
+            const hora = ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0');
+
+            div.innerHTML = `
+                <span class="mensaje-usuario">${data.emisor}</span>
+                <p class="mensaje-contenido">${data.mensaje}</p>
+                <span class="mensaje-hora">${hora}</span>
+            `;
+
+            contenedor.appendChild(div);
+            contenedor.scrollTop = contenedor.scrollHeight;
+        });
+
+        // Enviar mensaje
+        function enviarMensaje() {
+            const mensaje = input.value.trim();
+            if (!mensaje) return;
+
+            fetch(enviarUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ mensaje: mensaje })
+            });
+
+            input.value = '';
+            input.focus();
         }
 
-        scrollToBottom();
-
-        // Actualización automática cada 2 segundos
-        async function actualizarMensajes() {
-            try {
-                const response = await fetch(window.location.href, {
-                    headers: {'X-Requested-With': 'XMLHttpRequest'}
-                });
-                const text = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const nuevosMensajes = doc.getElementById('messagesBox').innerHTML;
-                messagesBox.innerHTML = nuevosMensajes;
-                scrollToBottom();
-            } catch (err) {
-                console.error('Error al actualizar mensajes:', err);
-            }
-        }
-
-        setInterval(actualizarMensajes, 2000); // cada 2 segundos
-
-        // Scroll al enviar mensaje sin recargar
-        const chatForm = document.getElementById('chatForm');
-        chatForm.addEventListener('submit', () => {
-            setTimeout(scrollToBottom, 100);
+        document.getElementById('btn-enviar').addEventListener('click', enviarMensaje);
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') enviarMensaje();
         });
     </script>
-<script>
-    // Baja automáticamente al último mensaje
-    window.onload = function() {
-        const chatContainer = document.querySelector('.chat-mensajes');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-    };
-</script>
 
 </body>
 </html>

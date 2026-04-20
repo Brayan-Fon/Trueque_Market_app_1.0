@@ -4,7 +4,19 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import JsonResponse
+import pusher
+import json
 from .models import Perfil, Producto, Mensaje
+
+# Configuración de Pusher
+pusher_client = pusher.Pusher(
+    app_id='2143654',
+    key='f101b2a33c5689a793de',
+    secret='b360e1977e1c2d199eb2',
+    cluster='us2',
+    ssl=True
+)
 
 
 # ======================
@@ -14,7 +26,6 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
@@ -23,7 +34,6 @@ def login_view(request):
         else:
             messages.error(request, 'Usuario o contraseña incorrectos')
             return redirect('login')
-
     return render(request, 'app_trueques/login.html')
 
 
@@ -48,7 +58,6 @@ def registro_view(request):
 
         user = User.objects.create_user(username=username, email=email, password=password1)
         Perfil.objects.create(user=user, cedula=cedula)
-
         messages.success(request, 'Usuario registrado correctamente ✅')
         return redirect('login')
 
@@ -133,23 +142,60 @@ def chat_view(request, producto_id):
         receptor__in=[request.user, otro_usuario]
     ).order_by('fecha_envio')
 
-    if request.method == 'POST':
-        contenido = request.POST.get('mensaje')
-        if contenido and contenido.strip():
-            Mensaje.objects.create(
-                emisor=request.user,
-                receptor=otro_usuario,
-                producto=producto,
-                contenido=contenido
-            )
-            return redirect('chat', producto_id=producto.id)
-
     context = {
         'producto': producto,
         'otro_usuario': otro_usuario,
         'mensajes': mensajes,
+        'pusher_key': 'f101b2a33c5689a793de',
+        'pusher_cluster': 'us2',
     }
     return render(request, 'app_trueques/chat.html', context)
+
+
+# ======================
+# ENDPOINT ENVIAR MENSAJE CON PUSHER
+# ======================
+@login_required
+def enviar_mensaje(request, producto_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        contenido = data.get('mensaje', '').strip()
+
+        if not contenido:
+            return JsonResponse({'error': 'Mensaje vacío'}, status=400)
+
+        producto = get_object_or_404(Producto, id=producto_id)
+        propietario = producto.propietario
+
+        if propietario == request.user:
+            ultimo_mensaje = Mensaje.objects.filter(
+                producto=producto,
+                receptor=request.user
+            ).order_by('-fecha_envio').first()
+            otro_usuario = ultimo_mensaje.emisor if ultimo_mensaje else None
+        else:
+            otro_usuario = propietario
+
+        if not otro_usuario:
+            return JsonResponse({'error': 'No se encontró receptor'}, status=400)
+
+        # Guardar en base de datos
+        Mensaje.objects.create(
+            emisor=request.user,
+            receptor=otro_usuario,
+            producto=producto,
+            contenido=contenido
+        )
+
+        # Disparar evento en Pusher
+        pusher_client.trigger(f'chat-{producto_id}', 'nuevo-mensaje', {
+            'mensaje': contenido,
+            'emisor': request.user.username,
+        })
+
+        return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
 # ======================
@@ -158,7 +204,6 @@ def chat_view(request, producto_id):
 @login_required
 def mis_chats_view(request):
     user = request.user
-
     chats = Mensaje.objects.filter(Q(emisor=user) | Q(receptor=user))
 
     chat_agrupados = {}
