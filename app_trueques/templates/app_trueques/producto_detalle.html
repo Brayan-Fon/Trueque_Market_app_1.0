@@ -64,7 +64,14 @@
             <h3>📍 Ubicación del producto</h3>
 
             {% if producto.latitud and producto.longitud %}
-                <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 14px;"></div>
+
+                <!-- Dirección obtenida desde Nominatim API -->
+                <p id="direccion" style="margin: 10px 0; color: #555; font-size: 14px;">
+                    🔍 Obteniendo dirección...
+                </p>
+
+                <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 8px;"></div>
+
             {% else %}
                 <p class="sin-ubicacion">⚠️ Este producto no tiene ubicación registrada.</p>
             {% endif %}
@@ -72,7 +79,7 @@
 
     </main>
 
-    <!-- Leaflet JS al final del body -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     {% if producto.latitud and producto.longitud %}
@@ -80,6 +87,9 @@
         const lat = parseFloat("{{ producto.latitud }}");
         const lng = parseFloat("{{ producto.longitud }}");
 
+        // =====================
+        // INICIALIZAR MAPA
+        // =====================
         const mapa = L.map('mapa').setView([lat, lng], 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -90,6 +100,44 @@
             .addTo(mapa)
             .bindPopup('<b>{{ producto.nombre }}</b><br>Publicado por <b>{{ producto.propietario.username }}</b>')
             .openPopup();
+
+        // =====================
+        // NOMINATIM API
+        // Convierte coordenadas en dirección legible
+        // Docs: https://nominatim.org/release-docs/latest/api/Reverse/
+        // =====================
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`, {
+            headers: {
+                // Nominatim requiere un User-Agent identificando tu app
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const direccionEl = document.getElementById('direccion');
+
+            if (data && data.display_name) {
+                // Extraer partes relevantes de la dirección
+                const addr = data.address;
+                let direccionCorta = '';
+
+                if (addr.road) direccionCorta += addr.road;
+                if (addr.house_number) direccionCorta += ' #' + addr.house_number;
+                if (addr.suburb) direccionCorta += ', ' + addr.suburb;
+                if (addr.city || addr.town || addr.village) {
+                    direccionCorta += ', ' + (addr.city || addr.town || addr.village);
+                }
+                if (addr.country) direccionCorta += ', ' + addr.country;
+
+                direccionEl.innerHTML = `📍 <strong>${direccionCorta || data.display_name}</strong>`;
+            } else {
+                direccionEl.innerHTML = '📍 Dirección no disponible';
+            }
+        })
+        .catch(error => {
+            document.getElementById('direccion').innerHTML = '📍 No se pudo obtener la dirección';
+            console.error('Error Nominatim API:', error);
+        });
     </script>
     {% endif %}
 
