@@ -7,9 +7,8 @@
     <title>{{ producto.nombre }} - Trueque Market</title>
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/producto_detalle.css' %}">
-    <!-- Leaflet -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -66,32 +65,33 @@
 
             {% if producto.latitud and producto.longitud %}
                 <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 14px;"></div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const lat = {{ producto.latitud }};
-                        const lng = {{ producto.longitud }};
-
-                        const mapa = L.map('mapa').setView([lat, lng], 15);
-
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        }).addTo(mapa);
-
-                        L.marker([lat, lng])
-                            .addTo(mapa)
-                            .bindPopup(`
-                                <b>{{ producto.nombre }}</b><br>
-                                Publicado por <b>{{ producto.propietario.username }}</b>
-                            `)
-                            .openPopup();
-                    });
-                </script>
             {% else %}
                 <p class="sin-ubicacion">⚠️ Este producto no tiene ubicación registrada.</p>
             {% endif %}
         </div>
 
     </main>
+
+    <!-- Leaflet JS al final del body -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    {% if producto.latitud and producto.longitud %}
+    <script>
+        const lat = {{ producto.latitud }};
+        const lng = {{ producto.longitud }};
+
+        const mapa = L.map('mapa').setView([lat, lng], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapa);
+
+        L.marker([lat, lng])
+            .addTo(mapa)
+            .bindPopup('<b>{{ producto.nombre }}</b><br>Publicado por <b>{{ producto.propietario.username }}</b>')
+            .openPopup();
+    </script>
+    {% endif %}
 
 </body>
 </html>
