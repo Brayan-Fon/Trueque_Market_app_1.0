@@ -77,8 +77,8 @@
 
     {% if producto.latitud and producto.longitud %}
     <script>
-        const lat = {{ producto.latitud }};
-        const lng = {{ producto.longitud }};
+        const lat = parseFloat("{{ producto.latitud }}");
+        const lng = parseFloat("{{ producto.longitud }}");
 
         const mapa = L.map('mapa').setView([lat, lng], 15);
 
