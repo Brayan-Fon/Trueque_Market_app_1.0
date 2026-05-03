@@ -7,9 +7,10 @@ from django.contrib.auth.models import User
 class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     cedula = models.CharField(max_length=20, unique=True)
+    verificado = models.BooleanField(default=False)  # True si pasó verificación MetaMap
 
     def __str__(self):
-        return f"{self.user.username} - {self.cedula}"
+        return f"{self.user.username} - {self.cedula} - {'✅' if self.verificado else '❌'}"
 
 
 # ======================
@@ -21,8 +22,6 @@ class Producto(models.Model):
     imagen = models.ImageField(upload_to='productos/')
     propietario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-
-    # Ubicación del producto
     latitud = models.FloatField(null=True, blank=True)
     longitud = models.FloatField(null=True, blank=True)
 

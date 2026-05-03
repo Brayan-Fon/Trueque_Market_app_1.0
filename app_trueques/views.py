@@ -5,8 +5,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
+from django.conf import settings
 import pusher
 import json
+import requests
 from .models import Perfil, Producto, Mensaje
 
 # Configuración de Pusher
@@ -17,6 +19,42 @@ pusher_client = pusher.Pusher(
     cluster='us2',
     ssl=True
 )
+
+
+# ======================
+# METAMAP - Obtener token de acceso
+# ======================
+def obtener_token_metamap():
+    url = 'https://api.getmati.com/oauth'
+    response = requests.post(url, data={
+        'grant_type': 'client_credentials',
+        'client_id': settings.METAMAP_CLIENT_ID,
+        'client_secret': settings.METAMAP_CLIENT_SECRET,
+    })
+    if response.status_code == 200:
+        return response.json().get('access_token')
+    return None
+
+
+# ======================
+# METAMAP - Crear verificación
+# ======================
+def crear_verificacion_metamap(token, cedula):
+    url = 'https://api.getmati.com/v2/verifications'
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json',
+    }
+    payload = {
+        'flowId': settings.METAMAP_CLIENT_ID,  # usa el client_id como flowId por defecto
+        'metadata': {
+            'cedula': cedula,
+        }
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code in [200, 201]:
+        return response.json()
+    return None
 
 
 # ======================
@@ -38,7 +76,7 @@ def login_view(request):
 
 
 # ======================
-# VISTA DE REGISTRO
+# VISTA DE REGISTRO CON METAMAP
 # ======================
 def registro_view(request):
     if request.method == 'POST':
@@ -47,6 +85,7 @@ def registro_view(request):
         cedula = request.POST['cedula']
         password1 = request.POST['password1']
         password2 = request.POST['password2']
+        metamap_verificado = request.POST.get('metamap_verificado', 'false')
 
         if password1 != password2:
             messages.error(request, 'Las contraseñas no coinciden')
@@ -56,12 +95,25 @@ def registro_view(request):
             messages.error(request, 'El usuario ya existe')
             return redirect('registro')
 
+        if Perfil.objects.filter(cedula=cedula).exists():
+            messages.error(request, 'Ya existe una cuenta con esa cédula')
+            return redirect('registro')
+
+        # Verificar que completó el proceso MetaMap
+        if metamap_verificado != 'true':
+            messages.error(request, '⚠️ Debes verificar tu identidad antes de registrarte')
+            return redirect('registro')
+
         user = User.objects.create_user(username=username, email=email, password=password1)
-        Perfil.objects.create(user=user, cedula=cedula)
-        messages.success(request, 'Usuario registrado correctamente ✅')
+        Perfil.objects.create(user=user, cedula=cedula, verificado=True)
+        messages.success(request, 'Usuario registrado y verificado correctamente ✅')
         return redirect('login')
 
-    return render(request, 'app_trueques/registro.html')
+    # Pasar la API key de MetaMap al template
+    context = {
+        'metamap_client_id': settings.METAMAP_CLIENT_ID,
+    }
+    return render(request, 'app_trueques/registro.html', context)
 
 
 # ======================
@@ -179,7 +231,6 @@ def enviar_mensaje(request, producto_id):
         if not otro_usuario:
             return JsonResponse({'error': 'No se encontró receptor'}, status=400)
 
-        # Guardar en base de datos
         Mensaje.objects.create(
             emisor=request.user,
             receptor=otro_usuario,
@@ -187,7 +238,6 @@ def enviar_mensaje(request, producto_id):
             contenido=contenido
         )
 
-        # Disparar evento en Pusher
         pusher_client.trigger(f'chat-{producto_id}', 'nuevo-mensaje', {
             'mensaje': contenido,
             'emisor': request.user.username,
