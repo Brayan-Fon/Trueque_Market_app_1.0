@@ -122,3 +122,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
+
+METAMAP_CLIENT_ID = os.getenv('METAMAP_CLIENT_ID')
+METAMAP_CLIENT_SECRET = os.getenv('METAMAP_CLIENT_SECRET')
