@@ -7,7 +7,6 @@
     <title>Agregar Producto - Trueque Market</title>
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/agregar_producto.css' %}">
-    <!-- Leaflet para preview del mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
@@ -53,18 +52,19 @@
                 <input type="file" id="imagen" name="imagen" accept="image/*">
             </div>
 
-            <!-- Campos ocultos de ubicación -->
+            <!-- Campos ocultos — se guardan coordenadas aproximadas, no exactas -->
             <input type="hidden" name="latitud" id="latitud">
             <input type="hidden" name="longitud" id="longitud">
 
-            <!-- Sección de ubicación -->
             <div class="form-group">
-                <label>📍 Ubicación del producto</label>
+                <label>📍 Zona del producto</label>
+                <p style="font-size:13px; color:#777; margin-bottom:8px;">
+                    🔒 Por privacidad, solo se mostrará una zona aproximada de 1 km, no tu ubicación exacta.
+                </p>
                 <button type="button" id="btn-ubicacion" class="btn-ubicacion">
-                    📍 Detectar mi ubicación
+                    📍 Detectar mi zona
                 </button>
                 <p id="ubicacion-status" class="ubicacion-status"></p>
-                <!-- Preview del mapa -->
                 <div id="mapa-preview" style="display:none; height:250px; border-radius:12px; margin-top:12px;"></div>
             </div>
 
@@ -74,11 +74,23 @@
 
     <script>
         let mapa = null;
-        let marcador = null;
+        let circulo = null;
+
+        // Desplaza coordenadas aleatoriamente hasta ~500 metros
+        // para que nunca se guarde la ubicación exacta
+        function aproximarCoordenadas(lat, lng) {
+            const radio = 0.004; // ~440 metros en grados
+            const deltaLat = (Math.random() - 0.5) * radio;
+            const deltaLng = (Math.random() - 0.5) * radio;
+            return {
+                lat: lat + deltaLat,
+                lng: lng + deltaLng
+            };
+        }
 
         document.getElementById('btn-ubicacion').addEventListener('click', function () {
             const status = document.getElementById('ubicacion-status');
-            status.textContent = '🔍 Detectando ubicación...';
+            status.textContent = '🔍 Detectando zona...';
             status.style.color = '#555';
 
             if (!navigator.geolocation) {
@@ -89,29 +101,41 @@
 
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
+                    // Aproximar antes de guardar
+                    const aprox = aproximarCoordenadas(
+                        pos.coords.latitude,
+                        pos.coords.longitude
+                    );
 
-                    document.getElementById('latitud').value = lat;
-                    document.getElementById('longitud').value = lng;
+                    document.getElementById('latitud').value = aprox.lat;
+                    document.getElementById('longitud').value = aprox.lng;
 
-                    status.textContent = '✅ Ubicación detectada correctamente.';
+                    status.textContent = '✅ Zona detectada. Tu ubicación exacta no será compartida.';
                     status.style.color = 'green';
 
-                    // Mostrar preview del mapa
+                    // Mostrar preview con círculo de zona
                     const mapaDiv = document.getElementById('mapa-preview');
                     mapaDiv.style.display = 'block';
 
                     if (!mapa) {
-                        mapa = L.map('mapa-preview').setView([lat, lng], 15);
+                        mapa = L.map('mapa-preview').setView([aprox.lat, aprox.lng], 13);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '© OpenStreetMap contributors'
                         }).addTo(mapa);
-                        marcador = L.marker([lat, lng]).addTo(mapa)
-                            .bindPopup('📍 Ubicación de tu producto').openPopup();
+
+                        // Círculo de zona en vez de marcador exacto
+                        circulo = L.circle([aprox.lat, aprox.lng], {
+                            radius: 1000,         // 1 km de radio
+                            color: '#3b6d11',
+                            fillColor: '#a8d878',
+                            fillOpacity: 0.25,
+                            weight: 2
+                        }).addTo(mapa)
+                          .bindPopup('📍 Zona aproximada del producto')
+                          .openPopup();
                     } else {
-                        mapa.setView([lat, lng], 15);
-                        marcador.setLatLng([lat, lng]);
+                        mapa.setView([aprox.lat, aprox.lng], 13);
+                        circulo.setLatLng([aprox.lat, aprox.lng]);
                     }
                 },
                 function () {

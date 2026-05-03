@@ -7,7 +7,6 @@
     <title>{{ producto.nombre }} - Trueque Market</title>
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/producto_detalle.css' %}">
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 <body>
@@ -59,27 +58,29 @@
             </div>
         </div>
 
-        <!-- MAPA DE UBICACIÓN -->
+        <!-- MAPA DE ZONA -->
         <div class="detalle-mapa">
-            <h3>📍 Ubicación del producto</h3>
+            <h3>📍 Zona del producto</h3>
 
             {% if producto.latitud and producto.longitud %}
 
-                <!-- Dirección obtenida desde Nominatim API -->
-                <p id="direccion" style="margin: 10px 0; color: #555; font-size: 14px;">
-                    🔍 Obteniendo dirección...
+                <!-- Barrio/zona obtenida desde Nominatim API -->
+                <p id="zona" style="margin: 10px 0; color: #555; font-size: 14px;">
+                    🔍 Obteniendo zona...
+                </p>
+                <p style="font-size: 12px; color: #999; margin-bottom: 8px;">
+                    🔒 Se muestra una zona aproximada para proteger la privacidad del vendedor.
                 </p>
 
                 <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 8px;"></div>
 
             {% else %}
-                <p class="sin-ubicacion">⚠️ Este producto no tiene ubicación registrada.</p>
+                <p class="sin-ubicacion">⚠️ Este producto no tiene zona registrada.</p>
             {% endif %}
         </div>
 
     </main>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     {% if producto.latitud and producto.longitud %}
@@ -87,56 +88,52 @@
         const lat = parseFloat("{{ producto.latitud }}");
         const lng = parseFloat("{{ producto.longitud }}");
 
-        // =====================
-        // INICIALIZAR MAPA
-        // =====================
-        const mapa = L.map('mapa').setView([lat, lng], 15);
+        // Zoom más alejado para no revelar la ubicación exacta
+        const mapa = L.map('mapa').setView([lat, lng], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(mapa);
 
-        L.marker([lat, lng])
-            .addTo(mapa)
-            .bindPopup('<b>{{ producto.nombre }}</b><br>Publicado por <b>{{ producto.propietario.username }}</b>')
-            .openPopup();
+        // Círculo de zona en vez de marcador exacto
+        L.circle([lat, lng], {
+            radius: 1000,           // 1 km de radio
+            color: '#3b6d11',
+            fillColor: '#a8d878',
+            fillOpacity: 0.25,
+            weight: 2
+        }).addTo(mapa)
+          .bindPopup('<b>{{ producto.nombre }}</b><br>📍 Zona aproximada')
+          .openPopup();
 
-        // =====================
-        // NOMINATIM API
-        // Convierte coordenadas en dirección legible
-        // Docs: https://nominatim.org/release-docs/latest/api/Reverse/
-        // =====================
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`, {
-            headers: {
-                // Nominatim requiere un User-Agent identificando tu app
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
+        // Nominatim API — mostrar solo barrio/localidad, no dirección exacta
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es&zoom=13`)
+        .then(r => r.json())
         .then(data => {
-            const direccionEl = document.getElementById('direccion');
-
-            if (data && data.display_name) {
-                // Extraer partes relevantes de la dirección
+            const zonaEl = document.getElementById('zona');
+            if (data && data.address) {
                 const addr = data.address;
-                let direccionCorta = '';
 
-                if (addr.road) direccionCorta += addr.road;
-                if (addr.house_number) direccionCorta += ' #' + addr.house_number;
-                if (addr.suburb) direccionCorta += ', ' + addr.suburb;
+                // Mostrar solo barrio y ciudad, nunca la calle exacta
+                let zona = '';
+                if (addr.suburb)        zona += addr.suburb;
+                else if (addr.quarter)  zona += addr.quarter;
+                else if (addr.neighbourhood) zona += addr.neighbourhood;
+
                 if (addr.city || addr.town || addr.village) {
-                    direccionCorta += ', ' + (addr.city || addr.town || addr.village);
+                    zona += (zona ? ', ' : '') + (addr.city || addr.town || addr.village);
                 }
-                if (addr.country) direccionCorta += ', ' + addr.country;
+                if (addr.state) zona += ', ' + addr.state;
 
-                direccionEl.innerHTML = `📍 <strong>${direccionCorta || data.display_name}</strong>`;
+                zonaEl.innerHTML = zona
+                    ? `📍 Zona: <strong>${zona}</strong>`
+                    : `📍 Zona: <strong>${data.display_name.split(',').slice(-3).join(',').trim()}</strong>`;
             } else {
-                direccionEl.innerHTML = '📍 Dirección no disponible';
+                zonaEl.innerHTML = '📍 Zona no disponible';
             }
         })
-        .catch(error => {
-            document.getElementById('direccion').innerHTML = '📍 No se pudo obtener la dirección';
-            console.error('Error Nominatim API:', error);
+        .catch(() => {
+            document.getElementById('zona').innerHTML = '📍 No se pudo obtener la zona';
         });
     </script>
     {% endif %}
