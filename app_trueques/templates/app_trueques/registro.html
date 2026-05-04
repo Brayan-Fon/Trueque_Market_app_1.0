@@ -36,6 +36,16 @@
         }
         .toggle-password:hover svg { fill: #007bff; }
 
+        .input-error { border: 1.5px solid #e74c3c !important; }
+        .input-ok    { border: 1.5px solid #27ae60 !important; }
+        .campo-msg {
+            font-size: 11px;
+            margin: -8px 0 8px 2px;
+            min-height: 16px;
+        }
+        .campo-msg.error { color: #e74c3c; }
+        .campo-msg.ok    { color: #27ae60; }
+
         .verificacion-box {
             background: #f0f9ff;
             border: 1.5px solid #bfdbfe;
@@ -54,12 +64,18 @@
             font-weight: 600;
             margin-top: 10px;
         }
-        .verificacion-status.ok { color: green; }
+        .verificacion-status.ok    { color: green; }
         .verificacion-status.error { color: red; }
 
         .btn-submit:disabled {
             background: #ccc;
             cursor: not-allowed;
+        }
+
+        /* Bloquear botón MetaMap si cédula no es válida */
+        .metamap-bloqueado {
+            opacity: 0.4;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -77,13 +93,29 @@
 
             <form method="POST" id="form-registro">
                 {% csrf_token %}
-                <input type="text" name="username" placeholder="Usuario" required>
-                <input type="email" name="email" placeholder="Correo electrónico" required>
-                <input type="text" name="cedula" id="cedula" placeholder="Cédula" required>
 
+                <!-- USUARIO -->
+                <input type="text" id="username" name="username"
+                       placeholder="Usuario" required autocomplete="off">
+                <p class="campo-msg" id="msg-username"></p>
+
+                <!-- EMAIL -->
+                <input type="email" id="email" name="email"
+                       placeholder="Correo electrónico" required autocomplete="off">
+                <p class="campo-msg" id="msg-email"></p>
+
+                <!-- CÉDULA — debe coincidir con MetaMap -->
+                <input type="text" id="cedula" name="cedula"
+                       placeholder="Cédula" required autocomplete="off"
+                       inputmode="numeric">
+                <p class="campo-msg" id="msg-cedula"></p>
+
+                <!-- CONTRASEÑA -->
                 <div class="password-container">
-                    <input type="password" id="password1" name="password1" placeholder="Contraseña" required>
-                    <button type="button" class="toggle-password" onclick="togglePassword('password1', this)">
+                    <input type="password" id="password1" name="password1"
+                           placeholder="Contraseña" required>
+                    <button type="button" class="toggle-password"
+                            onclick="togglePassword('password1', this)">
                         <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5C21.27 8.11 17 4.5 12 4.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
                         </svg>
@@ -93,10 +125,14 @@
                         </svg>
                     </button>
                 </div>
+                <p class="campo-msg" id="msg-password1"></p>
 
+                <!-- CONFIRMAR CONTRASEÑA -->
                 <div class="password-container">
-                    <input type="password" id="password2" name="password2" placeholder="Confirmar Contraseña" required>
-                    <button type="button" class="toggle-password" onclick="togglePassword('password2', this)">
+                    <input type="password" id="password2" name="password2"
+                           placeholder="Confirmar Contraseña" required>
+                    <button type="button" class="toggle-password"
+                            onclick="togglePassword('password2', this)">
                         <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5C21.27 8.11 17 4.5 12 4.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
                         </svg>
@@ -106,26 +142,32 @@
                         </svg>
                     </button>
                 </div>
+                <p class="campo-msg" id="msg-password2"></p>
 
-                <!-- CAMPO OCULTO: indica si MetaMap verificó al usuario -->
+                <!-- CAMPO OCULTO -->
                 <input type="hidden" name="metamap_verificado" id="metamap_verificado" value="false">
+                <input type="hidden" id="cedula_verificada" value="">
 
                 <!-- SECCIÓN DE VERIFICACIÓN METAMAP -->
                 <div class="verificacion-box">
-                    <p>🔒 Para completar tu registro debes verificar tu identidad con tu cédula.</p>
+                    <p>🔒 Ingresa tu cédula arriba y luego verifica tu identidad. La cédula debe coincidir con tu documento real.</p>
 
-                    <!-- Botón oficial de MetaMap -->
-                    <mati-button
-                        clientid="{{ metamap_client_id }}"
-                        flowId="{{ metamap_client_id }}"
-                        color="#1E3A8A"
-                        textColor="#ffffff"
-                    />
+                    <div id="metamap-wrapper" class="metamap-bloqueado">
+                        <mati-button
+                            clientid="{{ metamap_client_id }}"
+                            flowId="{{ metamap_client_id }}"
+                            color="#1E3A8A"
+                            textColor="#ffffff"
+                        />
+                    </div>
+
+                    <p style="font-size:11px; color:#999; margin-top:8px;" id="hint-cedula">
+                        ⬆️ Primero ingresa una cédula válida para habilitar la verificación
+                    </p>
 
                     <p class="verificacion-status" id="verificacion-status"></p>
                 </div>
 
-                <!-- Botón de registro deshabilitado hasta verificar -->
                 <button type="submit" class="btn-submit" id="btn-registrar" disabled>
                     🔒 Verifica tu identidad primero
                 </button>
@@ -136,9 +178,174 @@
     </div>
 
     <script>
+        let cedulaValida = false;
+        let metamapCompletado = false;
+
+        // =====================
+        // VALIDAR USUARIO
+        // =====================
+        document.getElementById('username').addEventListener('input', function () {
+            const val = this.value.trim();
+            const msg = document.getElementById('msg-username');
+            const regex = /^[a-zA-Z0-9_]+$/;
+            if (val === '') {
+                this.className = ''; msg.textContent = '';
+            } else if (!regex.test(val)) {
+                this.classList.add('input-error'); this.classList.remove('input-ok');
+                msg.textContent = '❌ Sin espacios ni caracteres especiales';
+                msg.className = 'campo-msg error';
+            } else {
+                this.classList.add('input-ok'); this.classList.remove('input-error');
+                msg.textContent = '✅ Usuario válido';
+                msg.className = 'campo-msg ok';
+            }
+        });
+
+        // =====================
+        // VALIDAR EMAIL
+        // =====================
+        document.getElementById('email').addEventListener('input', function () {
+            const val = this.value.trim();
+            const msg = document.getElementById('msg-email');
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (val === '') {
+                this.className = ''; msg.textContent = '';
+            } else if (!regex.test(val)) {
+                this.classList.add('input-error'); this.classList.remove('input-ok');
+                msg.textContent = '❌ Correo no válido';
+                msg.className = 'campo-msg error';
+            } else {
+                this.classList.add('input-ok'); this.classList.remove('input-error');
+                msg.textContent = '✅ Correo válido';
+                msg.className = 'campo-msg ok';
+            }
+        });
+
+        // =====================
+        // VALIDAR CÉDULA y habilitar MetaMap
+        // =====================
+        document.getElementById('cedula').addEventListener('input', function () {
+            // Solo números
+            this.value = this.value.replace(/[^0-9]/g, '');
+            const val = this.value.trim();
+            const msg = document.getElementById('msg-cedula');
+            const wrapper = document.getElementById('metamap-wrapper');
+            const hint = document.getElementById('hint-cedula');
+
+            // Si cambia la cédula, resetear verificación MetaMap
+            metamapCompletado = false;
+            cedulaValida = false;
+            document.getElementById('metamap_verificado').value = 'false';
+            document.getElementById('cedula_verificada').value = '';
+            document.getElementById('verificacion-status').textContent = '';
+            document.getElementById('btn-registrar').disabled = true;
+            document.getElementById('btn-registrar').textContent = '🔒 Verifica tu identidad primero';
+
+            if (val === '') {
+                this.className = ''; msg.textContent = '';
+                wrapper.classList.add('metamap-bloqueado');
+                hint.style.display = 'block';
+            } else if (val.length < 6 || val.length > 10) {
+                this.classList.add('input-error'); this.classList.remove('input-ok');
+                msg.textContent = '❌ La cédula debe tener entre 6 y 10 dígitos';
+                msg.className = 'campo-msg error';
+                wrapper.classList.add('metamap-bloqueado');
+                hint.style.display = 'block';
+            } else {
+                this.classList.add('input-ok'); this.classList.remove('input-error');
+                msg.textContent = '✅ Cédula válida — ahora verifica tu identidad';
+                msg.className = 'campo-msg ok';
+                // Habilitar botón MetaMap
+                wrapper.classList.remove('metamap-bloqueado');
+                hint.style.display = 'none';
+                cedulaValida = true;
+            }
+        });
+
+        // =====================
+        // VALIDAR CONTRASEÑA
+        // =====================
+        document.getElementById('password1').addEventListener('input', function () {
+            const val = this.value;
+            const msg = document.getElementById('msg-password1');
+            if (val === '') {
+                this.className = ''; msg.textContent = '';
+            } else if (val.length < 8) {
+                this.classList.add('input-error'); this.classList.remove('input-ok');
+                msg.textContent = '❌ Mínimo 8 caracteres';
+                msg.className = 'campo-msg error';
+            } else {
+                this.classList.add('input-ok'); this.classList.remove('input-error');
+                msg.textContent = '✅ Contraseña válida';
+                msg.className = 'campo-msg ok';
+            }
+            validarConfirmar();
+        });
+
+        // =====================
+        // CONFIRMAR CONTRASEÑA
+        // =====================
+        document.getElementById('password2').addEventListener('input', validarConfirmar);
+
+        function validarConfirmar() {
+            const p1 = document.getElementById('password1').value;
+            const p2 = document.getElementById('password2').value;
+            const msg = document.getElementById('msg-password2');
+            if (p2 === '') {
+                document.getElementById('password2').className = '';
+                msg.textContent = '';
+            } else if (p1 !== p2) {
+                document.getElementById('password2').classList.add('input-error');
+                document.getElementById('password2').classList.remove('input-ok');
+                msg.textContent = '❌ Las contraseñas no coinciden';
+                msg.className = 'campo-msg error';
+            } else {
+                document.getElementById('password2').classList.add('input-ok');
+                document.getElementById('password2').classList.remove('input-error');
+                msg.textContent = '✅ Contraseñas coinciden';
+                msg.className = 'campo-msg ok';
+            }
+        }
+
+        // =====================
+        // EVENTOS METAMAP
+        // =====================
+        const matiButton = document.querySelector('mati-button');
+
+        // Verificación completada exitosamente
+        matiButton.addEventListener('mati:userFinishedSdk', function(e) {
+            const cedulaIngresada = document.getElementById('cedula').value.trim();
+
+            // Guardar cédula verificada y marcar como completado
+            document.getElementById('cedula_verificada').value = cedulaIngresada;
+            document.getElementById('metamap_verificado').value = 'true';
+            metamapCompletado = true;
+
+            document.getElementById('verificacion-status').textContent = '✅ Identidad verificada correctamente con cédula ' + cedulaIngresada;
+            document.getElementById('verificacion-status').className = 'verificacion-status ok';
+
+            // Habilitar botón de registro
+            const btn = document.getElementById('btn-registrar');
+            btn.disabled = false;
+            btn.textContent = '✅ Completar registro';
+        });
+
+        // Verificación cancelada
+        matiButton.addEventListener('mati:exitedSdk', function(e) {
+            document.getElementById('metamap_verificado').value = 'false';
+            metamapCompletado = false;
+            document.getElementById('verificacion-status').textContent = '❌ Verificación cancelada. Inténtalo de nuevo.';
+            document.getElementById('verificacion-status').className = 'verificacion-status error';
+            document.getElementById('btn-registrar').disabled = true;
+            document.getElementById('btn-registrar').textContent = '🔒 Verifica tu identidad primero';
+        });
+
+        // =====================
+        // MOSTRAR/OCULTAR CONTRASEÑA
+        // =====================
         function togglePassword(id, btn) {
             const input = document.getElementById(id);
-            const eyeOpen = btn.querySelector('.eye-open');
+            const eyeOpen   = btn.querySelector('.eye-open');
             const eyeClosed = btn.querySelector('.eye-closed');
             if (input.type === "password") {
                 input.type = "text";
@@ -150,25 +357,6 @@
                 eyeClosed.style.display = "none";
             }
         }
-
-        // Escuchar eventos de MetaMap
-        const matiButton = document.querySelector('mati-button');
-
-        // Cuando el usuario completa la verificación exitosamente
-        matiButton.addEventListener('mati:userFinishedSdk', function(e) {
-            document.getElementById('metamap_verificado').value = 'true';
-            document.getElementById('verificacion-status').textContent = '✅ Identidad verificada correctamente';
-            document.getElementById('verificacion-status').className = 'verificacion-status ok';
-            const btn = document.getElementById('btn-registrar');
-            btn.disabled = false;
-            btn.textContent = '✅ Completar registro';
-        });
-
-        // Cuando el usuario cancela o hay error
-        matiButton.addEventListener('mati:exitedSdk', function(e) {
-            document.getElementById('verificacion-status').textContent = '❌ Verificación cancelada. Inténtalo de nuevo.';
-            document.getElementById('verificacion-status').className = 'verificacion-status error';
-        });
     </script>
 </body>
 </html>
