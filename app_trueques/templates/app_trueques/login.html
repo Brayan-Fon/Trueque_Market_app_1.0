@@ -12,12 +12,10 @@
             position: relative;
             width: 100%;
         }
-
         .password-container input {
             width: 100%;
             padding-right: 40px;
         }
-
         .toggle-password {
             position: absolute;
             right: 10px;
@@ -28,16 +26,31 @@
             border: none;
             padding: 0;
         }
-
         .toggle-password svg {
             width: 22px;
             height: 22px;
             fill: #555;
             transition: 0.3s;
         }
+        .toggle-password:hover svg { fill: #007bff; }
 
-        .toggle-password:hover svg {
-            fill: #007bff;
+        .input-error {
+            border: 1.5px solid #e74c3c !important;
+        }
+        .input-ok {
+            border: 1.5px solid #27ae60 !important;
+        }
+        .campo-msg {
+            font-size: 11px;
+            margin: -8px 0 8px 2px;
+            min-height: 16px;
+        }
+        .campo-msg.error { color: #e74c3c; }
+        .campo-msg.ok    { color: #27ae60; }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -46,13 +59,33 @@
         <div class="login-card">
             <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
             <h2>Iniciar Sesión</h2>
-            <form method="POST">
-                {% csrf_token %}
-                <input type="text" name="username" placeholder="Usuario" required>
 
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" id="form-login">
+                {% csrf_token %}
+
+                <!-- USUARIO -->
+                <input type="text" id="username" name="username"
+                       placeholder="Usuario" required autocomplete="off">
+                <p class="campo-msg" id="msg-username"></p>
+
+                <!-- CÉDULA -->
+                <input type="text" id="cedula" name="cedula"
+                       placeholder="Cédula" required autocomplete="off"
+                       inputmode="numeric">
+                <p class="campo-msg" id="msg-cedula"></p>
+
+                <!-- CONTRASEÑA -->
                 <div class="password-container">
-                    <input type="password" id="password" name="password" placeholder="Contraseña" required>
-                    <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+                    <input type="password" id="password" name="password"
+                           placeholder="Contraseña" required>
+                    <button type="button" class="toggle-password"
+                            onclick="togglePassword('password', this)">
                         <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5C21.27 8.11 17 4.5 12 4.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
                         </svg>
@@ -62,19 +95,118 @@
                         </svg>
                     </button>
                 </div>
+                <p class="campo-msg" id="msg-password"></p>
 
-                <button type="submit" class="btn-submit">Ingresar</button>
+                <button type="submit" class="btn-submit" id="btn-ingresar" disabled>
+                    Ingresar
+                </button>
             </form>
             <p>¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a></p>
         </div>
     </div>
 
     <script>
+        const usernameInput = document.getElementById('username');
+        const cedulaInput   = document.getElementById('cedula');
+        const passwordInput = document.getElementById('password');
+        const btnIngresar   = document.getElementById('btn-ingresar');
+
+        // =====================
+        // VALIDAR USUARIO
+        // Solo letras, números y guión bajo. Sin espacios ni especiales.
+        // =====================
+        usernameInput.addEventListener('input', function () {
+            const val = this.value.trim();
+            const msg = document.getElementById('msg-username');
+            const regex = /^[a-zA-Z0-9_]+$/;
+
+            if (val === '') {
+                this.className = '';
+                msg.textContent = '';
+            } else if (!regex.test(val)) {
+                this.classList.add('input-error');
+                this.classList.remove('input-ok');
+                msg.textContent = '❌ Sin espacios ni caracteres especiales';
+                msg.className = 'campo-msg error';
+            } else {
+                this.classList.add('input-ok');
+                this.classList.remove('input-error');
+                msg.textContent = '✅ Usuario válido';
+                msg.className = 'campo-msg ok';
+            }
+            validarFormulario();
+        });
+
+        // =====================
+        // VALIDAR CÉDULA
+        // Solo números, entre 6 y 10 dígitos
+        // =====================
+        cedulaInput.addEventListener('input', function () {
+            // Eliminar cualquier carácter no numérico automáticamente
+            this.value = this.value.replace(/[^0-9]/g, '');
+            const val = this.value.trim();
+            const msg = document.getElementById('msg-cedula');
+
+            if (val === '') {
+                this.className = '';
+                msg.textContent = '';
+            } else if (val.length < 6 || val.length > 10) {
+                this.classList.add('input-error');
+                this.classList.remove('input-ok');
+                msg.textContent = '❌ La cédula debe tener entre 6 y 10 dígitos';
+                msg.className = 'campo-msg error';
+            } else {
+                this.classList.add('input-ok');
+                this.classList.remove('input-error');
+                msg.textContent = '✅ Cédula válida';
+                msg.className = 'campo-msg ok';
+            }
+            validarFormulario();
+        });
+
+        // =====================
+        // VALIDAR CONTRASEÑA
+        // Mínimo 6 caracteres
+        // =====================
+        passwordInput.addEventListener('input', function () {
+            const val = this.value;
+            const msg = document.getElementById('msg-password');
+
+            if (val === '') {
+                this.className = '';
+                msg.textContent = '';
+            } else if (val.length < 6) {
+                this.classList.add('input-error');
+                this.classList.remove('input-ok');
+                msg.textContent = '❌ Mínimo 6 caracteres';
+                msg.className = 'campo-msg error';
+            } else {
+                this.classList.add('input-ok');
+                this.classList.remove('input-error');
+                msg.textContent = '✅ Contraseña válida';
+                msg.className = 'campo-msg ok';
+            }
+            validarFormulario();
+        });
+
+        // =====================
+        // HABILITAR BOTÓN solo si todo es válido
+        // =====================
+        function validarFormulario() {
+            const usernameOk = /^[a-zA-Z0-9_]+$/.test(usernameInput.value.trim());
+            const cedulaOk   = cedulaInput.value.length >= 6 && cedulaInput.value.length <= 10;
+            const passwordOk = passwordInput.value.length >= 6;
+
+            btnIngresar.disabled = !(usernameOk && cedulaOk && passwordOk);
+        }
+
+        // =====================
+        // MOSTRAR/OCULTAR CONTRASEÑA
+        // =====================
         function togglePassword(id, btn) {
             const input = document.getElementById(id);
-            const eyeOpen = btn.querySelector('.eye-open');
+            const eyeOpen   = btn.querySelector('.eye-open');
             const eyeClosed = btn.querySelector('.eye-closed');
-            
             if (input.type === "password") {
                 input.type = "text";
                 eyeOpen.style.display = "none";

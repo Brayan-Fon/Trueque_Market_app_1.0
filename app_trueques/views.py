@@ -64,14 +64,35 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
+        cedula   = request.POST.get('cedula', '').strip()
+
+        # Verificar que el usuario existe
+        try:
+            user_obj = User.objects.get(username=username)
+        except User.DoesNotExist:
+            messages.error(request, '❌ Usuario o contraseña incorrectos')
+            return redirect('login')
+
+        # Verificar que la cédula coincide con la registrada
+        try:
+            perfil = Perfil.objects.get(user=user_obj)
+            if perfil.cedula != cedula:
+                messages.error(request, '❌ La cédula no coincide con la registrada')
+                return redirect('login')
+        except Perfil.DoesNotExist:
+            messages.error(request, '❌ No se encontró el perfil del usuario')
+            return redirect('login')
+
+        # Autenticar usuario
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
             messages.success(request, f'Bienvenido {username} 👋')
             return redirect('inicio')
         else:
-            messages.error(request, 'Usuario o contraseña incorrectos')
+            messages.error(request, '❌ Usuario o contraseña incorrectos')
             return redirect('login')
+
     return render(request, 'app_trueques/login.html')
 
 
