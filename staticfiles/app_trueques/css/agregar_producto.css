@@ -1,56 +1,46 @@
-/* agregar_producto.css */
+/* ================================================
+   AGREGAR PRODUCTO — CSS
+   ================================================ */
 
 .form-container {
-    max-width: 500px;
-    margin: 40px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  max-width: 640px;
+  margin: 40px auto;
+  padding: 0 24px 48px;
+  animation: fadeUp 0.4s ease both;
 }
 
 .form-container h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #004aad;
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  color: var(--text);
+  margin-bottom: 28px;
+  text-align: center;
 }
 
-.form-container input,
-.form-container textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+.form-container form {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  padding: 36px;
+  box-shadow: var(--shadow-sm);
 }
 
-.btn-submit {
-    width: 100%;
-    background: #004aad;
-    color: white;
-    border: none;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
+.form-container .btn-submit {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  border-radius: var(--radius-md);
+  margin-top: 8px;
 }
 
-.btn-submit:hover {
-    background: #00307a;
+.ubicacion-status {
+  font-size: 12px;
+  font-weight: 500;
+  margin: 4px 0 8px;
+  min-height: 18px;
 }
 
-.btn-secondary {
-    display: block;
-    margin-top: 10px;
-    text-align: center;
-    text-decoration: none;
-    color: #004aad;
-    border: 1px solid #004aad;
-    padding: 8px 15px;
-    border-radius: 5px;
-}
-
-.btn-secondary:hover {
-    background: #004aad;
-    color: white;
+@media (max-width: 600px) {
+  .form-container { padding: 0 12px 32px; }
+  .form-container form { padding: 24px; }
 }
