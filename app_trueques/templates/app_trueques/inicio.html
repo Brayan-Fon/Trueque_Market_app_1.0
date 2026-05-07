@@ -18,10 +18,15 @@
                 <h1>Trueque Market</h1>
             </div>
             <div class="nav-right">
-                <span>Hola, {{ user.username }} 👋</span>
-                <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
-                <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
-            </div>
+    {% if user.is_authenticated %}
+        <span>Hola, {{ user.username }} 👋</span>
+        <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
+        <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="btn-primary">Iniciar sesión</a>
+        <a href="{% url 'registro' %}" class="btn-secondary">Registrarse</a>
+    {% endif %}
+</div>
         </div>
     </header>
     <main>
@@ -114,7 +119,7 @@
             <div class="footer-col"><h4>Legal</h4><a href="#">Términos y condiciones</a><a href="#">Privacidad</a></div>
             <div class="footer-col"><h4>Síguenos</h4><div class="footer-socials"><a href="#" class="social-btn">f</a><a href="#" class="social-btn">t</a><a href="#" class="social-btn">in</a></div></div>
         </div>
-        <div class="footer-bottom"><p>© 2024 Trueque Market. Todos los derechos reservados.</p></div>
+        <div class="footer-bottom"><p>© 2026 Trueque Market. Todos los derechos reservados.</p></div>
     </footer>
 </body>
 </html>
