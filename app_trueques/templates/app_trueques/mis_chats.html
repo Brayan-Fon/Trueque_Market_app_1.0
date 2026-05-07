@@ -3,30 +3,36 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Chats - Trueque Market</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/mis_chats.css' %}">
 </head>
 <body>
 
     <header class="header-chat">
         <h1>💬 Mis Chats</h1>
-        <a href="{% url 'marketplace' %}" class="btn-volver">⬅️ Marketplace</a>
+        <a href="{% url 'marketplace' %}" class="btn-volver">← Marketplace</a>
     </header>
 
     <main class="chat-list-container">
         {% if chats %}
             {% for chat in chats %}
                 <a href="{% url 'chat' chat.producto.id %}" class="chat-item">
+                    <div class="chat-avatar">💬</div>
                     <div class="chat-info">
                         <span class="chat-producto">{{ chat.producto.nombre }}</span>
                         <span class="chat-usuario">Con: {{ chat.otro_usuario.username }}</span>
-                        <span class="chat-ultimo">{{ chat.ultimo_mensaje|truncatechars:40 }}</span>
+                        <span class="chat-ultimo">{{ chat.ultimo_mensaje|truncatechars:50 }}</span>
                     </div>
-                    <div class="chat-fecha">{{ chat.fecha|date:"d/m/Y H:i" }}</div>
+                    <div class="chat-fecha">{{ chat.fecha|date:"d/m H:i" }}</div>
+                    <span class="chat-arrow">›</span>
                 </a>
             {% endfor %}
         {% else %}
-            <p class="no-chats">No tienes chats todavía. 💬</p>
+            <p class="no-chats">No tienes chats todavía.<br>¡Explora el marketplace y haz tu primera oferta! 💬</p>
         {% endif %}
     </main>
 

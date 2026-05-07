@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio - Trueque Market</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/inicio.css' %}">
 </head>
@@ -16,37 +18,103 @@
                 <h1>Trueque Market</h1>
             </div>
             <div class="nav-right">
-                <span>Hola, {{ user.username }}</span>
+                <span>Hola, {{ user.username }} 👋</span>
                 <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
-                <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
-                
+                <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
             </div>
         </div>
     </header>
-
     <main>
-        <section class="welcome-section">
-            <div class="welcome-card">
-                <h2>¡Bienvenido a Trueque Market!</h2>
-                <p>Explora, comparte y realiza trueques de manera fácil y segura.</p>
-                <a href="{% url 'marketplace' %}" class="btn-primary">Explorar Trueques</a>
+        <section class="hero">
+            <div class="hero-content fade-up">
+                <div class="hero-badge"><span class="hero-badge-dot"></span>Intercambio sin dinero</div>
+                <h1>Dale una segunda<br><span>vida</span> a tus cosas</h1>
+                <p>Publica lo que ya no usas y encuentra lo que necesitas. Conecta con personas cerca de ti y trueca de forma segura.</p>
+                <div class="hero-btns">
+                    <a href="{% url 'marketplace' %}" class="btn-primary">Explorar trueques</a>
+                    <a href="{% url 'agregar_producto' %}" class="btn-secondary">Publicar artículo</a>
+                </div>
+            </div>
+            <div class="hero-visual fade-up delay-1">
+                <div class="hero-circle">🔄</div>
             </div>
         </section>
-
-        <section class="features-section">
-            <div class="card">
-                <h3>Trueques recientes</h3>
-                <p>Mira las últimas oportunidades de intercambio de los usuarios.</p>
+        <div class="filters fade-up delay-2">
+            <a href="{% url 'marketplace' %}" class="btn-primary" style="padding:8px 18px;font-size:13px;">Todos</a>
+            <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Electrónica</a>
+            <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Ropa</a>
+            <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Hogar</a>
+            <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Deportes</a>
+        </div>
+        <section class="main-section fade-up delay-3">
+            <div class="products-col">
+                <div class="section-title"><span>🔥</span><h2>Destacados</h2></div>
+                <div class="products-grid">
+                    <div class="card">
+                        <div class="card-image">📱</div>
+                        <h3>Trueques recientes</h3>
+                        <p class="card-desc">Mira las últimas oportunidades de intercambio.</p>
+                        <span class="tag green">Disponible</span>
+                        <a href="{% url 'marketplace' %}" class="btn-primary" style="font-size:12px;padding:8px 0;text-align:center;border-radius:8px;margin-top:4px;">Ver trueques</a>
+                    </div>
+                    <div class="card">
+                        <div class="card-image">👤</div>
+                        <h3>Tu perfil</h3>
+                        <p class="card-desc">Administra tus publicaciones y configuración.</p>
+                        <span class="tag green">Activo</span>
+                        <a href="#" class="btn-secondary" style="font-size:12px;padding:8px 0;text-align:center;border-radius:8px;margin-top:4px;">Ir a perfil</a>
+                    </div>
+                    <div class="card">
+                        <div class="card-image">🤝</div>
+                        <h3>Comunidad</h3>
+                        <p class="card-desc">Conéctate con otros usuarios y comparte.</p>
+                        <span class="tag green">Nuevo</span>
+                        <a href="{% url 'marketplace' %}" class="btn-secondary" style="font-size:12px;padding:8px 0;text-align:center;border-radius:8px;margin-top:4px;">Explorar</a>
+                    </div>
+                </div>
+                <div class="see-more"><a href="{% url 'marketplace' %}" class="btn-secondary">Ver más artículos</a></div>
             </div>
-            <div class="card">
-                <h3>Tu perfil</h3>
-                <p>Administra tus publicaciones y configura tu información.</p>
+            <div class="active-trades">
+                <div class="active-trades-header"><h2>Accesos rápidos</h2><span class="tag teal">Menú</span></div>
+                <a href="{% url 'agregar_producto' %}" class="btn-primary" style="text-align:center;padding:11px;border-radius:10px;font-size:14px;">+ Publicar artículo</a>
+                <div class="trades-list">
+                    <div class="trade-item">
+                        <div class="trade-icon">💬</div>
+                        <div class="trade-info"><p>Mis chats</p><span>Revisa tus conversaciones</span></div>
+                        <a href="{% url 'mis_chats' %}" class="trade-arrow">›</a>
+                    </div>
+                    <div class="trade-item">
+                        <div class="trade-icon">📦</div>
+                        <div class="trade-info"><p>Mis publicaciones</p><span>Gestiona tus artículos</span></div>
+                        <a href="{% url 'marketplace' %}" class="trade-arrow">›</a>
+                    </div>
+                    <div class="trade-item">
+                        <div class="trade-icon">🔍</div>
+                        <div class="trade-info"><p>Explorar mercado</p><span>Encuentra lo que buscas</span></div>
+                        <a href="{% url 'marketplace' %}" class="trade-arrow">›</a>
+                    </div>
+                </div>
+                <a href="{% url 'marketplace' %}" class="see-all">Ver marketplace ›</a>
             </div>
-            <div class="card">
-                <h3>Comunidad</h3>
-                <p>Conéctate con otros usuarios y comparte tus conocimientos.</p>
+        </section>
+        <section class="cta-section fade-up delay-4">
+            <div class="cta-box">
+                <div>
+                    <h2>¡Bienvenido, {{ user.username }}!<br>Comienza tu primer trueque.</h2>
+                    <p>Únete a la comunidad y empieza a intercambiar hoy mismo.</p>
+                </div>
+                <a href="{% url 'marketplace' %}" class="btn-main">Explorar ahora →</a>
             </div>
         </section>
     </main>
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col"><h4>Nosotros</h4><a href="#">Quiénes somos</a><a href="#">Socios</a><a href="#">Centro de ayuda</a></div>
+            <div class="footer-col"><h4>Soporte</h4><a href="#">Cómo funciona</a><a href="#">Contacto</a></div>
+            <div class="footer-col"><h4>Legal</h4><a href="#">Términos y condiciones</a><a href="#">Privacidad</a></div>
+            <div class="footer-col"><h4>Síguenos</h4><div class="footer-socials"><a href="#" class="social-btn">f</a><a href="#" class="social-btn">t</a><a href="#" class="social-btn">in</a></div></div>
+        </div>
+        <div class="footer-bottom"><p>© 2024 Trueque Market. Todos los derechos reservados.</p></div>
+    </footer>
 </body>
 </html>

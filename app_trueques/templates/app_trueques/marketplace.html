@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marketplace - Trueque Market</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/marketplace.css' %}">
 </head>
@@ -17,41 +19,50 @@
             </div>
             <div class="nav-right">
                 <span>Hola, {{ user.username }}</span>
-                <a href="{% url 'mis_chats' %}" class="btn-volver">💬 Mis Chats</a>
+                <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
                 <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
             </div>
         </div>
     </header>
 
-    <main>
+    <div class="marketplace-hero">
+        <h2>Marketplace</h2>
+        <p>Encuentra artículos para intercambiar cerca de ti</p>
+    </div>
+
+    <main class="marketplace-container">
         <div class="actions">
-            <a href="{% url 'agregar_producto' %}" class="btn-primary">Agregar Producto</a>
-            <a href="{% url 'inicio' %}" class="btn-secondary">Volver a Inicio</a>
+            <div class="actions-left">
+                <a href="{% url 'agregar_producto' %}" class="btn-primary">+ Agregar Producto</a>
+                <a href="{% url 'inicio' %}" class="btn-secondary">← Volver a Inicio</a>
+            </div>
         </div>
 
         <section class="productos-grid">
-    {% for producto in productos %}
-    <div class="producto-card">
-        {% if producto.imagen %}
-            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-        {% else %}
-            <img src="{% static 'app_trueques/img/no-image.png' %}" alt="Sin imagen">
-        {% endif %}
-        
-        <h3>{{ producto.nombre }}</h3>
-        <p>{{ producto.descripcion|truncatechars:100 }}</p>
-        <p class="propietario">Publicado por: <strong>{{ producto.propietario.username }}</strong></p>
-
-        <div class="botones-producto">
-            <a href="{% url 'producto_detalle' producto.id %}" class="btn-ver">🔍 Ver Detalle</a>
-            <a href="{% url 'chat' producto.id %}" class="btn-oferta">💬 Mandar Oferta</a>
-        </div>
-    </div>
-    {% empty %}
-    <p>No hay productos para mostrar.</p>
-    {% endfor %}
-</section>
-
+            {% for producto in productos %}
+            <div class="producto-card">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                {% else %}
+                    <img src="{% static 'app_trueques/img/no-image.png' %}" alt="Sin imagen">
+                {% endif %}
+                <div class="producto-card-body">
+                    <h3>{{ producto.nombre }}</h3>
+                    <p>{{ producto.descripcion|truncatechars:100 }}</p>
+                    <p class="propietario">Por: <strong>{{ producto.propietario.username }}</strong></p>
+                    <div class="botones-producto">
+                        <a href="{% url 'producto_detalle' producto.id %}" class="btn-ver">🔍 Ver Detalle</a>
+                        <a href="{% url 'chat' producto.id %}" class="btn-oferta">💬 Ofertar</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-productos">
+                <p>No hay productos disponibles aún.</p>
+                <a href="{% url 'agregar_producto' %}" class="btn-primary">Publicar el primero</a>
+            </div>
+            {% endfor %}
+        </section>
     </main>
 </body>
 </html>
