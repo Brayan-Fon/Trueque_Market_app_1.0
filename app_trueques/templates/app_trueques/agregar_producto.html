@@ -76,6 +76,7 @@
     <script>
         let mapa = null;
         let circulo = null;
+        let ubicacionGuardada = false;
 
         // Desplaza coordenadas aleatoriamente hasta ~500 metros
         // para que nunca se guarde la ubicación exacta
@@ -90,29 +91,61 @@
         }
 
         document.getElementById('btn-ubicacion').addEventListener('click', function () {
+            // Evitar que se ejecute dos veces y genere coordenadas distintas
+            if (ubicacionGuardada) {
+                alert('✅ La zona ya fue detectada. Si deseas cambiarla, recarga la página.');
+                return;
+            }
+
             const status = document.getElementById('ubicacion-status');
-            status.textContent = '🔍 Detectando zona...';
+            status.textContent = '🔍 Detectando zona... puede tardar unos segundos.';
             status.style.color = '#555';
+
+            const btn = document.getElementById('btn-ubicacion');
+            btn.disabled = true;
+            btn.textContent = '⏳ Detectando...';
 
             if (!navigator.geolocation) {
                 status.textContent = '❌ Tu navegador no soporta geolocalización.';
                 status.style.color = 'red';
+                btn.disabled = false;
+                btn.textContent = '📍 Detectar mi zona';
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
-                    // Aproximar antes de guardar
+                    const precision = pos.coords.accuracy; // metros de precisión real del dispositivo
+
+                    // Si la precisión es muy mala (más de 5 km), advertir al usuario
+                    if (precision > 5000) {
+                        status.textContent = '⚠️ Ubicación muy imprecisa (' + Math.round(precision / 1000) + ' km de margen). Activa el GPS o intenta desde otro dispositivo.';
+                        status.style.color = 'orange';
+                        btn.disabled = false;
+                        btn.textContent = '📍 Intentar de nuevo';
+                        return;
+                    }
+
+                    // Aproximar UNA SOLA VEZ y guardar — no volver a calcular
                     const aprox = aproximarCoordenadas(
                         pos.coords.latitude,
                         pos.coords.longitude
                     );
 
-                    document.getElementById('latitud').value = aprox.lat;
-                    document.getElementById('longitud').value = aprox.lng;
+                    document.getElementById('latitud').value = aprox.lat.toFixed(6);
+                    document.getElementById('longitud').value = aprox.lng.toFixed(6);
+                    ubicacionGuardada = true;
 
-                    status.textContent = '✅ Zona detectada. Tu ubicación exacta no será compartida.';
+                    const precisionTexto = precision < 100
+                        ? '📡 GPS activo — alta precisión'
+                        : precision < 1000
+                            ? '📶 Precisión aceptable (' + Math.round(precision) + ' m)'
+                            : '⚠️ Precisión baja (' + Math.round(precision) + ' m) — considera activar GPS';
+
+                    status.innerHTML = '✅ Zona detectada. Tu ubicación exacta no será compartida.<br><small style="color:#888">' + precisionTexto + '</small>';
                     status.style.color = 'green';
+
+                    btn.textContent = '✅ Zona detectada';
 
                     // Mostrar preview con círculo de zona
                     const mapaDiv = document.getElementById('mapa-preview');
@@ -124,9 +157,9 @@
                             attribution: '© OpenStreetMap contributors'
                         }).addTo(mapa);
 
-                        // Círculo de zona en vez de marcador exacto
+                        // Círculo de 1 km — igual que en el detalle del producto
                         circulo = L.circle([aprox.lat, aprox.lng], {
-                            radius: 1000,         // 1 km de radio
+                            radius: 1000,
                             color: '#3b6d11',
                             fillColor: '#a8d878',
                             fillOpacity: 0.25,
@@ -139,9 +172,21 @@
                         circulo.setLatLng([aprox.lat, aprox.lng]);
                     }
                 },
-                function () {
-                    status.textContent = '❌ No se pudo obtener la ubicación. Verifica los permisos.';
+                function (error) {
+                    let msg = '❌ No se pudo obtener la ubicación. ';
+                    if (error.code === 1) msg += 'Permiso denegado — activa la ubicación en tu navegador.';
+                    else if (error.code === 2) msg += 'GPS no disponible. Intenta desde otro lugar.';
+                    else if (error.code === 3) msg += 'Tiempo de espera agotado. Intenta de nuevo.';
+
+                    status.textContent = msg;
                     status.style.color = 'red';
+                    btn.disabled = false;
+                    btn.textContent = '📍 Intentar de nuevo';
+                },
+                {
+                    enableHighAccuracy: true,  // fuerza GPS en vez de WiFi/red
+                    timeout: 10000,            // espera hasta 10 segundos
+                    maximumAge: 0              // nunca usar caché de ubicaciones anteriores
                 }
             );
         });
