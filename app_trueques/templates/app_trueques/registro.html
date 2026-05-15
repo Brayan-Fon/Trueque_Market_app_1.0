@@ -193,7 +193,7 @@
                 this.className = ''; msg.textContent = '';
             } else if (!regex.test(val)) {
                 this.classList.add('input-error'); this.classList.remove('input-ok');
-                msg.textContent = '❌ Sin espacios ni caracteres especiales';
+                msg.textContent = '❌ Solo letras, números y guion bajo ( _ ). Sin espacios.';
                 msg.className = 'campo-msg error';
             } else {
                 this.classList.add('input-ok'); this.classList.remove('input-error');
