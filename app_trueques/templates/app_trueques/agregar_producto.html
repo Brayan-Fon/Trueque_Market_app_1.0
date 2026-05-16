@@ -10,6 +10,101 @@
     <link rel="stylesheet" href="{% static 'app_trueques/css/agregar_producto.css' %}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .buscador-zona {
+            position: relative;
+            width: 100%;
+        }
+        .buscador-zona input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .buscador-zona input:focus {
+            border-color: #1E3A8A;
+        }
+        .sugerencias {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1.5px solid #d1d5db;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            z-index: 1000;
+            max-height: 220px;
+            overflow-y: auto;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .sugerencia-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.15s;
+        }
+        .sugerencia-item:hover {
+            background-color: #eff6ff;
+            color: #1E3A8A;
+        }
+        .sugerencia-item:last-child {
+            border-bottom: none;
+        }
+        .zona-seleccionada {
+            display: none;
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #166534;
+            font-weight: 500;
+        }
+        .zona-seleccionada.visible {
+            display: block;
+        }
+        .tabs-ubicacion {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 9px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+        .tab-btn.activo {
+            background: #1E3A8A;
+            color: white;
+            border-color: #1E3A8A;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.activo {
+            display: block;
+        }
+        .buscando-spinner {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+    </style>
 </head>
 <body>
 
@@ -35,7 +130,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" id="form-producto">
             {% csrf_token %}
 
             <div class="form-group">
@@ -53,55 +148,220 @@
                 <input type="file" id="imagen" name="imagen" accept="image/*">
             </div>
 
-            <!-- Campos ocultos — se guardan coordenadas aproximadas, no exactas -->
+            <!-- Coordenadas ocultas -->
             <input type="hidden" name="latitud" id="latitud">
             <input type="hidden" name="longitud" id="longitud">
 
+            <!-- SECCIÓN ZONA -->
             <div class="form-group">
                 <label>📍 Zona del producto</label>
-                <p style="font-size:13px; color:#777; margin-bottom:8px;">
-                    🔒 Por privacidad, solo se mostrará una zona aproximada de 1 km, no tu ubicación exacta.
+                <p style="font-size:13px; color:#777; margin-bottom:12px;">
+                    🔒 Solo se mostrará una zona aproximada de 1 km para proteger tu privacidad.
                 </p>
-                <button type="button" id="btn-ubicacion" class="btn-ubicacion">
-                    📍 Detectar mi zona
-                </button>
-                <p id="ubicacion-status" class="ubicacion-status"></p>
-                <div id="mapa-preview" style="display:none; height:250px; border-radius:12px; margin-top:12px;"></div>
+
+                <!-- TABS -->
+                <div class="tabs-ubicacion">
+                    <button type="button" class="tab-btn activo" id="tab-btn-buscar" onclick="cambiarTab('buscar', this)">
+                        🔍 Buscar mi barrio
+                    </button>
+                    <button type="button" class="tab-btn" id="tab-btn-gps" onclick="cambiarTab('gps', this)">
+                        📡 Usar GPS
+                    </button>
+                </div>
+
+                <!-- TAB: BUSCADOR -->
+                <div id="tab-buscar" class="tab-panel activo">
+                    <div class="buscador-zona">
+                        <input
+                            type="text"
+                            id="input-zona"
+                            placeholder="Ej: Chapinero, Bogotá..."
+                            autocomplete="off"
+                        >
+                        <div class="sugerencias" id="lista-sugerencias" style="display:none;"></div>
+                    </div>
+                    <p class="buscando-spinner" id="spinner-texto"></p>
+                    <div class="zona-seleccionada" id="zona-seleccionada"></div>
+                </div>
+
+                <!-- TAB: GPS -->
+                <div id="tab-gps" class="tab-panel">
+                    <button type="button" id="btn-ubicacion" class="btn-ubicacion">
+                        📍 Detectar mi zona
+                    </button>
+                    <p id="ubicacion-status" class="ubicacion-status"></p>
+                </div>
+
+                <!-- MAPA PREVIEW -->
+                <div id="mapa-preview" style="display:none; height:250px; border-radius:12px; margin-top:14px;"></div>
             </div>
 
-            <button type="submit" class="btn-submit">✅ Publicar producto</button>
+            <button type="submit" class="btn-submit" id="btn-publicar">✅ Publicar producto</button>
         </form>
     </main>
 
     <script>
         let mapa = null;
         let circulo = null;
-        let ubicacionGuardada = false;
+        let gpsUsado = false;
+        let debounceTimer = null;
 
-        // Desplaza coordenadas aleatoriamente hasta ~500 metros
-        // para que nunca se guarde la ubicación exacta
+        // =====================
+        // TABS
+        // =====================
+        function cambiarTab(tab, btnClickeado) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('activo'));
+            document.getElementById('tab-' + tab).classList.add('activo');
+            btnClickeado.classList.add('activo');
+        }
+
+        // =====================
+        // APROXIMAR COORDENADAS (~500m)
+        // =====================
         function aproximarCoordenadas(lat, lng) {
-            const radio = 0.004; // ~440 metros en grados
+            const radio = 0.004;
             const deltaLat = (Math.random() - 0.5) * radio;
             const deltaLng = (Math.random() - 0.5) * radio;
             return {
-                lat: lat + deltaLat,
-                lng: lng + deltaLng
+                lat: parseFloat((lat + deltaLat).toFixed(6)),
+                lng: parseFloat((lng + deltaLng).toFixed(6))
             };
         }
 
+        // =====================
+        // MOSTRAR MAPA CON CÍRCULO 1KM
+        // =====================
+        function mostrarMapa(lat, lng) {
+            const mapaDiv = document.getElementById('mapa-preview');
+            mapaDiv.style.display = 'block';
+
+            if (!mapa) {
+                mapa = L.map('mapa-preview').setView([lat, lng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mapa);
+
+                circulo = L.circle([lat, lng], {
+                    radius: 1000,
+                    color: '#3b6d11',
+                    fillColor: '#a8d878',
+                    fillOpacity: 0.25,
+                    weight: 2
+                }).addTo(mapa)
+                  .bindPopup('📍 Zona aproximada del producto')
+                  .openPopup();
+            } else {
+                mapa.setView([lat, lng], 13);
+                circulo.setLatLng([lat, lng]);
+            }
+
+            setTimeout(() => mapa.invalidateSize(), 100);
+        }
+
+        // =====================
+        // GUARDAR COORDENADAS (aproximadas)
+        // =====================
+        function guardarCoordenadas(lat, lng) {
+            const aprox = aproximarCoordenadas(lat, lng);
+            document.getElementById('latitud').value = aprox.lat;
+            document.getElementById('longitud').value = aprox.lng;
+            mostrarMapa(aprox.lat, aprox.lng);
+        }
+
+        // =====================
+        // BUSCADOR NOMINATIM
+        // =====================
+        document.getElementById('input-zona').addEventListener('input', function () {
+            const query = this.value.trim();
+            const lista = document.getElementById('lista-sugerencias');
+            const spinner = document.getElementById('spinner-texto');
+            const zonaSeleccionada = document.getElementById('zona-seleccionada');
+
+            // Limpiar selección si escribe de nuevo
+            document.getElementById('latitud').value = '';
+            document.getElementById('longitud').value = '';
+            zonaSeleccionada.classList.remove('visible');
+
+            if (query.length < 3) {
+                lista.style.display = 'none';
+                spinner.textContent = '';
+                return;
+            }
+
+            spinner.textContent = '🔍 Buscando...';
+            clearTimeout(debounceTimer);
+
+            debounceTimer = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&accept-language=es&countrycodes=co`)
+                    .then(r => r.json())
+                    .then(data => {
+                        spinner.textContent = '';
+                        lista.innerHTML = '';
+
+                        if (!data.length) {
+                            lista.innerHTML = '<div class="sugerencia-item" style="color:#999; cursor:default;">Sin resultados. Intenta con otro barrio o ciudad.</div>';
+                            lista.style.display = 'block';
+                            return;
+                        }
+
+                        data.forEach(lugar => {
+                            const item = document.createElement('div');
+                            item.className = 'sugerencia-item';
+
+                            const addr = lugar.address;
+                            let nombre = '';
+                            if (addr.suburb || addr.neighbourhood || addr.quarter) {
+                                nombre += (addr.suburb || addr.neighbourhood || addr.quarter) + ', ';
+                            }
+                            nombre += (addr.city || addr.town || addr.village || '');
+                            if (addr.state) nombre += ', ' + addr.state;
+                            if (!nombre.trim()) nombre = lugar.display_name.split(',').slice(0, 3).join(',').trim();
+
+                            item.textContent = nombre;
+
+                            item.addEventListener('click', function () {
+                                document.getElementById('input-zona').value = nombre;
+                                lista.style.display = 'none';
+
+                                guardarCoordenadas(parseFloat(lugar.lat), parseFloat(lugar.lon));
+
+                                zonaSeleccionada.textContent = '✅ Zona seleccionada: ' + nombre;
+                                zonaSeleccionada.classList.add('visible');
+                            });
+
+                            lista.appendChild(item);
+                        });
+
+                        lista.style.display = 'block';
+                    })
+                    .catch(() => {
+                        spinner.textContent = '❌ Error al buscar. Verifica tu conexión.';
+                        lista.style.display = 'none';
+                    });
+            }, 400);
+        });
+
+        // Cerrar sugerencias al hacer clic fuera
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.buscador-zona')) {
+                document.getElementById('lista-sugerencias').style.display = 'none';
+            }
+        });
+
+        // =====================
+        // GPS
+        // =====================
         document.getElementById('btn-ubicacion').addEventListener('click', function () {
-            // Evitar que se ejecute dos veces y genere coordenadas distintas
-            if (ubicacionGuardada) {
+            if (gpsUsado) {
                 alert('✅ La zona ya fue detectada. Si deseas cambiarla, recarga la página.');
                 return;
             }
 
             const status = document.getElementById('ubicacion-status');
+            const btn = this;
             status.textContent = '🔍 Detectando zona... puede tardar unos segundos.';
             status.style.color = '#555';
-
-            const btn = document.getElementById('btn-ubicacion');
             btn.disabled = true;
             btn.textContent = '⏳ Detectando...';
 
@@ -115,80 +375,55 @@
 
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
-                    const precision = pos.coords.accuracy; // metros de precisión real del dispositivo
+                    const precision = pos.coords.accuracy;
 
-                    // Si la precisión es muy mala (más de 5 km), advertir al usuario
                     if (precision > 5000) {
-                        status.textContent = '⚠️ Ubicación muy imprecisa (' + Math.round(precision / 1000) + ' km de margen). Activa el GPS o intenta desde otro dispositivo.';
+                        status.innerHTML = '⚠️ Ubicación muy imprecisa (' + Math.round(precision / 1000) + ' km de margen).<br>Usa el buscador de barrio en su lugar.';
                         status.style.color = 'orange';
                         btn.disabled = false;
                         btn.textContent = '📍 Intentar de nuevo';
                         return;
                     }
 
-                    // Aproximar UNA SOLA VEZ y guardar — no volver a calcular
-                    const aprox = aproximarCoordenadas(
-                        pos.coords.latitude,
-                        pos.coords.longitude
-                    );
-
-                    document.getElementById('latitud').value = aprox.lat.toFixed(6);
-                    document.getElementById('longitud').value = aprox.lng.toFixed(6);
-                    ubicacionGuardada = true;
+                    guardarCoordenadas(pos.coords.latitude, pos.coords.longitude);
+                    gpsUsado = true;
 
                     const precisionTexto = precision < 100
                         ? '📡 GPS activo — alta precisión'
-                        : precision < 1000
-                            ? '📶 Precisión aceptable (' + Math.round(precision) + ' m)'
-                            : '⚠️ Precisión baja (' + Math.round(precision) + ' m) — considera activar GPS';
+                        : '📶 Precisión: ' + Math.round(precision) + ' m';
 
-                    status.innerHTML = '✅ Zona detectada. Tu ubicación exacta no será compartida.<br><small style="color:#888">' + precisionTexto + '</small>';
+                    status.innerHTML = '✅ Zona detectada correctamente.<br><small style="color:#888">' + precisionTexto + '</small>';
                     status.style.color = 'green';
-
                     btn.textContent = '✅ Zona detectada';
-
-                    // Mostrar preview con círculo de zona
-                    const mapaDiv = document.getElementById('mapa-preview');
-                    mapaDiv.style.display = 'block';
-
-                    if (!mapa) {
-                        mapa = L.map('mapa-preview').setView([aprox.lat, aprox.lng], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors'
-                        }).addTo(mapa);
-
-                        // Círculo de 1 km — igual que en el detalle del producto
-                        circulo = L.circle([aprox.lat, aprox.lng], {
-                            radius: 1000,
-                            color: '#3b6d11',
-                            fillColor: '#a8d878',
-                            fillOpacity: 0.25,
-                            weight: 2
-                        }).addTo(mapa)
-                          .bindPopup('📍 Zona aproximada del producto')
-                          .openPopup();
-                    } else {
-                        mapa.setView([aprox.lat, aprox.lng], 13);
-                        circulo.setLatLng([aprox.lat, aprox.lng]);
-                    }
                 },
                 function (error) {
                     let msg = '❌ No se pudo obtener la ubicación. ';
-                    if (error.code === 1) msg += 'Permiso denegado — activa la ubicación en tu navegador.';
-                    else if (error.code === 2) msg += 'GPS no disponible. Intenta desde otro lugar.';
-                    else if (error.code === 3) msg += 'Tiempo de espera agotado. Intenta de nuevo.';
-
+                    if (error.code === 1) msg += 'Permiso denegado.';
+                    else if (error.code === 2) msg += 'GPS no disponible.';
+                    else if (error.code === 3) msg += 'Tiempo agotado. Intenta de nuevo.';
                     status.textContent = msg;
                     status.style.color = 'red';
                     btn.disabled = false;
                     btn.textContent = '📍 Intentar de nuevo';
                 },
                 {
-                    enableHighAccuracy: true,  // fuerza GPS en vez de WiFi/red
-                    timeout: 10000,            // espera hasta 10 segundos
-                    maximumAge: 0              // nunca usar caché de ubicaciones anteriores
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
                 }
             );
+        });
+
+        // =====================
+        // VALIDAR ANTES DE ENVIAR
+        // =====================
+        document.getElementById('form-producto').addEventListener('submit', function (e) {
+            const lat = document.getElementById('latitud').value;
+            const lng = document.getElementById('longitud').value;
+            if (!lat || !lng) {
+                e.preventDefault();
+                alert('⚠️ Por favor selecciona una zona antes de publicar.\nUsa el buscador de barrio o el GPS.');
+            }
         });
     </script>
 
