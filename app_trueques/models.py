@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Avg
+from django.utils import timezone
 
 
 # ======================
@@ -13,7 +14,6 @@ class Perfil(models.Model):
     foto = models.ImageField(upload_to='perfiles/', null=True, blank=True)
     bio = models.TextField(max_length=300, blank=True, default='')
     ciudad = models.CharField(max_length=100, blank=True, default='')
-    from django.utils import timezone
     fecha_registro = models.DateTimeField(default=timezone.now)
 
     def promedio_calificacion(self):
