@@ -9,7 +9,7 @@ from django.conf import settings
 import pusher
 import json
 import requests
-from .models import Perfil, Producto, Mensaje
+from .models import Perfil, Producto, Mensaje, Calificacion, Trueque
 
 # Configuración de Pusher
 pusher_client = pusher.Pusher(
@@ -22,7 +22,7 @@ pusher_client = pusher.Pusher(
 
 
 # ======================
-# METAMAP - Obtener token de acceso
+# METAMAP
 # ======================
 def obtener_token_metamap():
     url = 'https://api.getmati.com/oauth'
@@ -36,9 +36,6 @@ def obtener_token_metamap():
     return None
 
 
-# ======================
-# METAMAP - Crear verificación
-# ======================
 def crear_verificacion_metamap(token, cedula):
     url = 'https://api.getmati.com/v2/verifications'
     headers = {
@@ -46,10 +43,8 @@ def crear_verificacion_metamap(token, cedula):
         'Content-Type': 'application/json',
     }
     payload = {
-        'flowId': settings.METAMAP_CLIENT_ID,  # usa el client_id como flowId por defecto
-        'metadata': {
-            'cedula': cedula,
-        }
+        'flowId': settings.METAMAP_CLIENT_ID,
+        'metadata': {'cedula': cedula}
     }
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code in [200, 201]:
@@ -58,7 +53,7 @@ def crear_verificacion_metamap(token, cedula):
 
 
 # ======================
-# VISTA DE LOGIN
+# LOGIN
 # ======================
 def login_view(request):
     if request.method == 'POST':
@@ -66,14 +61,12 @@ def login_view(request):
         password = request.POST['password']
         cedula   = request.POST.get('cedula', '').strip()
 
-        # Verificar que el usuario existe
         try:
             user_obj = User.objects.get(username=username)
         except User.DoesNotExist:
             messages.error(request, '❌ Usuario o contraseña incorrectos')
             return redirect('login')
 
-        # Verificar que la cédula coincide con la registrada
         try:
             perfil = Perfil.objects.get(user=user_obj)
             if perfil.cedula != cedula:
@@ -83,7 +76,6 @@ def login_view(request):
             messages.error(request, '❌ No se encontró el perfil del usuario')
             return redirect('login')
 
-        # Autenticar usuario
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
@@ -97,7 +89,7 @@ def login_view(request):
 
 
 # ======================
-# VISTA DE REGISTRO CON METAMAP
+# REGISTRO
 # ======================
 def registro_view(request):
     if request.method == 'POST':
@@ -120,7 +112,6 @@ def registro_view(request):
             messages.error(request, 'Ya existe una cuenta con esa cédula')
             return redirect('registro')
 
-        # Verificar que completó el proceso MetaMap
         if metamap_verificado != 'true':
             messages.error(request, '⚠️ Debes verificar tu identidad antes de registrarte')
             return redirect('registro')
@@ -130,30 +121,27 @@ def registro_view(request):
         messages.success(request, 'Usuario registrado y verificado correctamente ✅')
         return redirect('login')
 
-    # Pasar la API key de MetaMap al template
-    context = {
-        'metamap_client_id': settings.METAMAP_CLIENT_ID,
-    }
+    context = {'metamap_client_id': settings.METAMAP_CLIENT_ID}
     return render(request, 'app_trueques/registro.html', context)
 
 
 # ======================
-# VISTA DE INICIO
+# INICIO
 # ======================
 def inicio_view(request):
     return render(request, 'app_trueques/inicio.html')
 
 
 # ======================
-# VISTA DE MARKETPLACE
+# MARKETPLACE
 # ======================
 def marketplace_view(request):
-    productos = Producto.objects.all().order_by('-fecha_creacion')
+    productos = Producto.objects.filter(disponible=True).order_by('-fecha_creacion')
     return render(request, 'app_trueques/marketplace.html', {'productos': productos})
 
 
 # ======================
-# VISTA PARA AGREGAR PRODUCTO
+# AGREGAR PRODUCTO
 # ======================
 @login_required
 def agregar_producto_view(request):
@@ -179,7 +167,19 @@ def agregar_producto_view(request):
 
 
 # ======================
-# VISTA DE DETALLE DE PRODUCTO
+# ELIMINAR PRODUCTO
+# ======================
+@login_required
+def eliminar_producto_view(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id, propietario=request.user)
+    if request.method == 'POST':
+        producto.delete()
+        messages.success(request, '🗑️ Producto eliminado correctamente')
+    return redirect('perfil')
+
+
+# ======================
+# DETALLE PRODUCTO
 # ======================
 @login_required
 def producto_detalle_view(request, producto_id):
@@ -188,7 +188,165 @@ def producto_detalle_view(request, producto_id):
 
 
 # ======================
-# VISTA DE CHAT
+# PERFIL PROPIO
+# ======================
+@login_required
+def perfil_view(request):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+    productos = Producto.objects.filter(propietario=request.user).order_by('-fecha_creacion')
+    calificaciones = perfil.calificaciones_recibidas.order_by('-fecha')
+    trueques = Trueque.objects.filter(
+        Q(solicitante=request.user) | Q(propietario=request.user)
+    ).order_by('-fecha')
+
+    context = {
+        'perfil': perfil,
+        'productos': productos,
+        'calificaciones': calificaciones,
+        'trueques': trueques,
+    }
+    return render(request, 'app_trueques/perfil.html', context)
+
+
+# ======================
+# EDITAR PERFIL
+# ======================
+@login_required
+def editar_perfil_view(request):
+    perfil, _ = Perfil.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        perfil.bio = request.POST.get('bio', '').strip()
+        perfil.ciudad = request.POST.get('ciudad', '').strip()
+
+        if 'foto' in request.FILES:
+            perfil.foto = request.FILES['foto']
+
+        # Actualizar nombre y apellido del User
+        request.user.first_name = request.POST.get('first_name', '').strip()
+        request.user.last_name = request.POST.get('last_name', '').strip()
+        request.user.save()
+
+        perfil.save()
+        messages.success(request, '✅ Perfil actualizado correctamente')
+        return redirect('perfil')
+
+    return render(request, 'app_trueques/editar_perfil.html', {'perfil': perfil})
+
+
+# ======================
+# PERFIL PÚBLICO
+# ======================
+@login_required
+def perfil_publico_view(request, username):
+    usuario = get_object_or_404(User, username=username)
+
+    # Si es el propio usuario, redirigir al perfil propio
+    if usuario == request.user:
+        return redirect('perfil')
+
+    perfil, _ = Perfil.objects.get_or_create(user=usuario)
+    productos = Producto.objects.filter(propietario=usuario, disponible=True).order_by('-fecha_creacion')
+    calificaciones = perfil.calificaciones_recibidas.order_by('-fecha')
+
+    # Verificar si el usuario actual ya calificó a este perfil
+    ya_califico = Calificacion.objects.filter(
+        evaluador=request.user,
+        evaluado=perfil
+    ).exists()
+
+    context = {
+        'perfil': perfil,
+        'productos': productos,
+        'calificaciones': calificaciones,
+        'ya_califico': ya_califico,
+    }
+    return render(request, 'app_trueques/perfil_publico.html', context)
+
+
+# ======================
+# CALIFICAR USUARIO
+# ======================
+@login_required
+def calificar_view(request, username):
+    usuario = get_object_or_404(User, username=username)
+
+    if usuario == request.user:
+        messages.error(request, '❌ No puedes calificarte a ti mismo')
+        return redirect('perfil_publico', username=username)
+
+    perfil = get_object_or_404(Perfil, user=usuario)
+
+    if Calificacion.objects.filter(evaluador=request.user, evaluado=perfil).exists():
+        messages.error(request, '⚠️ Ya calificaste a este usuario')
+        return redirect('perfil_publico', username=username)
+
+    if request.method == 'POST':
+        puntaje = request.POST.get('puntaje')
+        comentario = request.POST.get('comentario', '').strip()
+
+        if not puntaje or int(puntaje) not in range(1, 6):
+            messages.error(request, '❌ Puntaje inválido')
+            return redirect('calificar', username=username)
+
+        Calificacion.objects.create(
+            evaluador=request.user,
+            evaluado=perfil,
+            puntaje=int(puntaje),
+            comentario=comentario
+        )
+        messages.success(request, f'✅ Calificaste a {username} con {puntaje}⭐')
+        return redirect('perfil_publico', username=username)
+
+    return render(request, 'app_trueques/calificar.html', {'perfil': perfil})
+
+
+# ======================
+# TRUEQUES
+# ======================
+@login_required
+def trueques_view(request):
+    trueques = Trueque.objects.filter(
+        Q(solicitante=request.user) | Q(propietario=request.user)
+    ).order_by('-fecha')
+    return render(request, 'app_trueques/trueques.html', {'trueques': trueques})
+
+
+@login_required
+def completar_trueque_view(request, trueque_id):
+    trueque = get_object_or_404(
+        Trueque,
+        id=trueque_id,
+        propietario=request.user,
+        estado='pendiente'
+    )
+    if request.method == 'POST':
+        trueque.estado = 'completado'
+        trueque.save()
+        messages.success(request, '🎉 Trueque marcado como completado')
+    return redirect('trueques')
+
+
+@login_required
+def cancelar_trueque_view(request, trueque_id):
+    trueque = get_object_or_404(
+        Trueque,
+        id=trueque_id,
+        estado='pendiente'
+    )
+    if request.user not in [trueque.solicitante, trueque.propietario]:
+        messages.error(request, '❌ No tienes permiso para cancelar este trueque')
+        return redirect('trueques')
+
+    if request.method == 'POST':
+        trueque.estado = 'cancelado'
+        trueque.save()
+        messages.success(request, '❌ Trueque cancelado')
+    return redirect('trueques')
+
+
+# ======================
+# CHAT
 # ======================
 @login_required
 def chat_view(request, producto_id):
@@ -225,9 +383,6 @@ def chat_view(request, producto_id):
     return render(request, 'app_trueques/chat.html', context)
 
 
-# ======================
-# ENDPOINT ENVIAR MENSAJE CON PUSHER
-# ======================
 @login_required
 def enviar_mensaje(request, producto_id):
     if request.method == 'POST':
@@ -270,7 +425,7 @@ def enviar_mensaje(request, producto_id):
 
 
 # ======================
-# VISTA DE MIS CHATS
+# MIS CHATS
 # ======================
 @login_required
 def mis_chats_view(request):
@@ -294,7 +449,7 @@ def mis_chats_view(request):
 
 
 # ======================
-# VISTA DE CERRAR SESIÓN
+# LOGOUT
 # ======================
 def logout_view(request):
     logout(request)
