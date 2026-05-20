@@ -18,17 +18,19 @@
                 <h1>Trueque Market</h1>
             </div>
             <div class="nav-right">
-    {% if user.is_authenticated %}
-        <span>Hola, {{ user.username }} 👋</span>
-        <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
-        <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
-    {% else %}
-        <a href="{% url 'login' %}" class="btn-primary">Iniciar sesión</a>
-        <a href="{% url 'registro' %}" class="btn-secondary">Registrarse</a>
-    {% endif %}
-</div>
+                {% if user.is_authenticated %}
+                    <span>Hola, {{ user.username }} 👋</span>
+                    <a href="{% url 'perfil' %}" class="btn-mis-chats">👤 Mi perfil</a>
+                    <a href="{% url 'mis_chats' %}" class="btn-mis-chats">💬 Mis Chats</a>
+                    <a href="{% url 'logout' %}" class="btn btn-danger">Cerrar sesión</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn-primary">Iniciar sesión</a>
+                    <a href="{% url 'registro' %}" class="btn-secondary">Registrarse</a>
+                {% endif %}
+            </div>
         </div>
     </header>
+
     <main>
         <section class="hero">
             <div class="hero-content fade-up">
@@ -44,6 +46,7 @@
                 <div class="hero-circle">🔄</div>
             </div>
         </section>
+
         <div class="filters fade-up delay-2">
             <a href="{% url 'marketplace' %}" class="btn-primary" style="padding:8px 18px;font-size:13px;">Todos</a>
             <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Electrónica</a>
@@ -51,6 +54,7 @@
             <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Hogar</a>
             <a href="{% url 'marketplace' %}" class="btn-secondary" style="padding:7px 16px;font-size:13px;">Deportes</a>
         </div>
+
         <section class="main-section fade-up delay-3">
             <div class="products-col">
                 <div class="section-title"><span>🔥</span><h2>Destacados</h2></div>
@@ -67,7 +71,7 @@
                         <h3>Tu perfil</h3>
                         <p class="card-desc">Administra tus publicaciones y configuración.</p>
                         <span class="tag green">Activo</span>
-                        <a href="#" class="btn-secondary" style="font-size:12px;padding:8px 0;text-align:center;border-radius:8px;margin-top:4px;">Ir a perfil</a>
+                        <a href="{% url 'perfil' %}" class="btn-secondary" style="font-size:12px;padding:8px 0;text-align:center;border-radius:8px;margin-top:4px;">Ir a perfil</a>
                     </div>
                     <div class="card">
                         <div class="card-image">🤝</div>
@@ -79,6 +83,7 @@
                 </div>
                 <div class="see-more"><a href="{% url 'marketplace' %}" class="btn-secondary">Ver más artículos</a></div>
             </div>
+
             <div class="active-trades">
                 <div class="active-trades-header"><h2>Accesos rápidos</h2><span class="tag teal">Menú</span></div>
                 <a href="{% url 'agregar_producto' %}" class="btn-primary" style="text-align:center;padding:11px;border-radius:10px;font-size:14px;">+ Publicar artículo</a>
@@ -91,7 +96,7 @@
                     <div class="trade-item">
                         <div class="trade-icon">📦</div>
                         <div class="trade-info"><p>Mis publicaciones</p><span>Gestiona tus artículos</span></div>
-                        <a href="{% url 'marketplace' %}" class="trade-arrow">›</a>
+                        <a href="{% url 'perfil' %}" class="trade-arrow">›</a>
                     </div>
                     <div class="trade-item">
                         <div class="trade-icon">🔍</div>
@@ -102,6 +107,7 @@
                 <a href="{% url 'marketplace' %}" class="see-all">Ver marketplace ›</a>
             </div>
         </section>
+
         <section class="cta-section fade-up delay-4">
             <div class="cta-box">
                 <div>
@@ -112,6 +118,7 @@
             </div>
         </section>
     </main>
+
     <footer>
         <div class="footer-grid">
             <div class="footer-col"><h4>Nosotros</h4><a href="#">Quiénes somos</a><a href="#">Socios</a><a href="#">Centro de ayuda</a></div>
