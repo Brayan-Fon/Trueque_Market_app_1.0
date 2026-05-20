@@ -138,3 +138,12 @@ LOGIN_URL = '/login/'
 
 METAMAP_CLIENT_ID = os.getenv('METAMAP_CLIENT_ID', '')
 METAMAP_CLIENT_SECRET = os.getenv('METAMAP_CLIENT_SECRET', '')
+
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    'SECURE': True,  # ← fuerza HTTPS
+}
