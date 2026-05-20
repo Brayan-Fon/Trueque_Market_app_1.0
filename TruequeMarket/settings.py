@@ -11,22 +11,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # CONFIGURACIÓN BÁSICA
 # ==============================
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-v83ius^1-aq&lzzgix14p&un-$9v7$6y@t26q%!0#pr1&@*5oq')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # ==============================
 # ALLOWED_HOSTS
 # ==============================
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS = [
-        RENDER_EXTERNAL_HOSTNAME,
-        'trueque-market-app-1-0.onrender.com',  # ✅ lo añadimos explícitamente
-        'localhost',
-        '127.0.0.1',
-    ]
-else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Agregar manualmente por si RENDER_EXTERNAL_HOSTNAME no está disponible
+ALLOWED_HOSTS += [
+    'trueque-market-app-1-0.onrender.com',
+    'trueque-market-app-1-0-1.onrender.com',
+]
 
 # ==============================
 # APLICACIONES
@@ -46,7 +47,7 @@ INSTALLED_APPS = [
 # ==============================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ debe ir justo después del SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,7 +64,7 @@ ROOT_URLCONF = 'TruequeMarket.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # opcional
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,10 +111,9 @@ USE_TZ = True
 # ARCHIVOS ESTÁTICOS Y MEDIA
 # ==============================
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'app_trueques' / 'static']  # ✅ ruta correcta
+STATICFILES_DIRS = [BASE_DIR / 'app_trueques' / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise para servir estáticos en Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
@@ -123,5 +123,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
-METAMAP_CLIENT_ID = os.getenv('METAMAP_CLIENT_ID')
-METAMAP_CLIENT_SECRET = os.getenv('METAMAP_CLIENT_SECRET')
+METAMAP_CLIENT_ID = os.getenv('METAMAP_CLIENT_ID', '')
+METAMAP_CLIENT_SECRET = os.getenv('METAMAP_CLIENT_SECRET', '')

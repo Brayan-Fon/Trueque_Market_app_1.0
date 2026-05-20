@@ -9,6 +9,7 @@ from django.conf import settings
 import pusher
 import json
 import requests
+import traceback
 from .models import Perfil, Producto, Mensaje, Calificacion, Trueque
 
 # Configuración de Pusher
@@ -91,8 +92,6 @@ def login_view(request):
 # ======================
 # REGISTRO
 # ======================
-import traceback
-
 def registro_view(request):
     if request.method == 'POST':
         try:
@@ -127,6 +126,12 @@ def registro_view(request):
         except Exception as e:
             print("🔴 ERROR REGISTRO:", traceback.format_exc())
             raise
+
+    # GET — mostrar formulario
+    context = {
+        'metamap_client_id': settings.METAMAP_CLIENT_ID or '',
+    }
+    return render(request, 'app_trueques/registro.html', context)
 
 
 # ======================
@@ -226,7 +231,6 @@ def editar_perfil_view(request):
         if 'foto' in request.FILES:
             perfil.foto = request.FILES['foto']
 
-        # Actualizar nombre y apellido del User
         request.user.first_name = request.POST.get('first_name', '').strip()
         request.user.last_name = request.POST.get('last_name', '').strip()
         request.user.save()
@@ -245,7 +249,6 @@ def editar_perfil_view(request):
 def perfil_publico_view(request, username):
     usuario = get_object_or_404(User, username=username)
 
-    # Si es el propio usuario, redirigir al perfil propio
     if usuario == request.user:
         return redirect('perfil')
 
@@ -253,7 +256,6 @@ def perfil_publico_view(request, username):
     productos = Producto.objects.filter(propietario=usuario, disponible=True).order_by('-fecha_creacion')
     calificaciones = perfil.calificaciones_recibidas.order_by('-fecha')
 
-    # Verificar si el usuario actual ya calificó a este perfil
     ya_califico = Calificacion.objects.filter(
         evaluador=request.user,
         evaluado=perfil
