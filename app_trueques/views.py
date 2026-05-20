@@ -91,38 +91,42 @@ def login_view(request):
 # ======================
 # REGISTRO
 # ======================
+import traceback
+
 def registro_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        email = request.POST['email']
-        cedula = request.POST['cedula']
-        password1 = request.POST['password1']
-        password2 = request.POST['password2']
-        metamap_verificado = request.POST.get('metamap_verificado', 'false')
+        try:
+            username = request.POST['username']
+            email = request.POST['email']
+            cedula = request.POST['cedula']
+            password1 = request.POST['password1']
+            password2 = request.POST['password2']
+            metamap_verificado = request.POST.get('metamap_verificado', 'false')
 
-        if password1 != password2:
-            messages.error(request, 'Las contraseñas no coinciden')
-            return redirect('registro')
+            if password1 != password2:
+                messages.error(request, 'Las contraseñas no coinciden')
+                return redirect('registro')
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'El usuario ya existe')
-            return redirect('registro')
+            if User.objects.filter(username=username).exists():
+                messages.error(request, 'El usuario ya existe')
+                return redirect('registro')
 
-        if Perfil.objects.filter(cedula=cedula).exists():
-            messages.error(request, 'Ya existe una cuenta con esa cédula')
-            return redirect('registro')
+            if Perfil.objects.filter(cedula=cedula).exists():
+                messages.error(request, 'Ya existe una cuenta con esa cédula')
+                return redirect('registro')
 
-        if metamap_verificado != 'true':
-            messages.error(request, '⚠️ Debes verificar tu identidad antes de registrarte')
-            return redirect('registro')
+            if metamap_verificado != 'true':
+                messages.error(request, '⚠️ Debes verificar tu identidad antes de registrarte')
+                return redirect('registro')
 
-        user = User.objects.create_user(username=username, email=email, password=password1)
-        Perfil.objects.create(user=user, cedula=cedula, verificado=True)
-        messages.success(request, 'Usuario registrado y verificado correctamente ✅')
-        return redirect('login')
+            user = User.objects.create_user(username=username, email=email, password=password1)
+            Perfil.objects.create(user=user, cedula=cedula, verificado=True)
+            messages.success(request, 'Usuario registrado y verificado correctamente ✅')
+            return redirect('login')
 
-    context = {'metamap_client_id': settings.METAMAP_CLIENT_ID}
-    return render(request, 'app_trueques/registro.html', context)
+        except Exception as e:
+            print("🔴 ERROR REGISTRO:", traceback.format_exc())
+            raise
 
 
 # ======================
