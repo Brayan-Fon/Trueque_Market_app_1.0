@@ -1,0 +1,93 @@
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f0f4ff;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.header-chat {
+    background-color: #1e40af;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-chat h1 {
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.header-chat .btn-volver {
+    text-decoration: none;
+    background: #2563eb;
+    padding: 8px 16px;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.header-chat .btn-volver:hover {
+    background: #0ea5e9;
+}
+
+.chat-list-container {
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 0 10px;
+}
+
+.chat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.chat-item:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.chat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-producto {
+    font-weight: 600;
+    color: #1e40af;
+}
+
+.chat-usuario {
+    font-size: 0.9rem;
+    color: #0ea5e9;
+}
+
+.chat-ultimo {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 3px;
+}
+
+.chat-fecha {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+.no-chats {
+    text-align: center;
+    margin-top: 50px;
+    font-size: 1rem;
+    color: #666;
+}

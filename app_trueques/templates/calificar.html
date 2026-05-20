@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calificar a @{{ perfil.user.username }} - Trueque Market</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <style>
+        body { background: #f0f4f8; }
+        .cal-container { max-width: 500px; margin: 40px auto; padding: 0 20px 60px; }
+        .cal-card { background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(30,58,138,0.1); padding: 32px; }
+        .cal-card h2 { color: #1E3A8A; font-size: 1.3rem; margin-bottom: 6px; text-align: center; }
+        .cal-card .subtitulo { text-align: center; color: #6b7280; font-size: 0.9rem; margin-bottom: 28px; }
+
+        /* Estrellas interactivas */
+        .estrellas-input { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; flex-direction: row-reverse; }
+        .estrellas-input input { display: none; }
+        .estrellas-input label {
+            font-size: 2.5rem;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: color 0.15s, transform 0.15s;
+        }
+        .estrellas-input label:hover,
+        .estrellas-input label:hover ~ label,
+        .estrellas-input input:checked ~ label {
+            color: #f59e0b;
+        }
+        .estrellas-input label:hover { transform: scale(1.15); }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.88rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        .form-group textarea { width: 100%; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.2s; font-family: inherit; resize: vertical; min-height: 100px; }
+        .form-group textarea:focus { border-color: #1E3A8A; }
+        .char-count { font-size: 0.75rem; color: #9ca3af; text-align: right; margin-top: 2px; }
+
+        .btn-enviar { width: 100%; padding: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+        .btn-enviar:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        .btn-cancelar { display: block; text-align: center; margin-top: 12px; color: #6b7280; font-size: 0.9rem; text-decoration: none; }
+        .btn-cancelar:hover { color: #374151; }
+
+        .puntaje-texto { text-align: center; font-size: 0.9rem; color: #6b7280; margin-top: -16px; margin-bottom: 16px; min-height: 20px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <div class="logo-title">
+            <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+            <h1>Trueque Market</h1>
+        </div>
+        <div class="nav-right">
+            <a href="{% url 'perfil_publico' perfil.user.username %}" class="btn">← Volver</a>
+            <a href="{% url 'logout' %}" class="btn">Cerrar sesión</a>
+        </div>
+    </div>
+</header>
+
+<main class="cal-container">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="margin-bottom:16px; padding:12px; border-radius:8px; background:#fee2e2; color:#dc2626; border:1px solid #fecaca;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="cal-card">
+        <h2>⭐ Calificar a @{{ perfil.user.username }}</h2>
+        <p class="subtitulo">Tu opinión ayuda a construir confianza en la comunidad</p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Estrellas interactivas (de derecha a izquierda para el CSS) -->
+            <div class="estrellas-input">
+                <input type="radio" name="puntaje" id="star5" value="5">
+                <label for="star5" title="Excelente">★</label>
+                <input type="radio" name="puntaje" id="star4" value="4">
+                <label for="star4" title="Muy bueno">★</label>
+                <input type="radio" name="puntaje" id="star3" value="3">
+                <label for="star3" title="Bueno">★</label>
+                <input type="radio" name="puntaje" id="star2" value="2">
+                <label for="star2" title="Regular">★</label>
+                <input type="radio" name="puntaje" id="star1" value="1">
+                <label for="star1" title="Malo">★</label>
+            </div>
+            <p class="puntaje-texto" id="puntaje-texto">Selecciona una calificación</p>
+
+            <div class="form-group">
+                <label for="comentario">Comentario (opcional)</label>
+                <textarea id="comentario" name="comentario" maxlength="500"
+                          placeholder="Cuéntanos cómo fue tu experiencia con este usuario..."></textarea>
+                <p class="char-count"><span id="comentario-count">0</span>/500</p>
+            </div>
+
+            <button type="submit" class="btn-enviar" id="btn-enviar" disabled>
+                ⭐ Enviar calificación
+            </button>
+            <a href="{% url 'perfil_publico' perfil.user.username %}" class="btn-cancelar">Cancelar</a>
+        </form>
+    </div>
+</main>
+
+<script>
+    const textos = {
+        1: '😕 Malo — experiencia negativa',
+        2: '😐 Regular — podría mejorar',
+        3: '🙂 Bueno — experiencia aceptable',
+        4: '😊 Muy bueno — recomendable',
+        5: '🤩 Excelente — totalmente confiable'
+    };
+
+    document.querySelectorAll('input[name="puntaje"]').forEach(input => {
+        input.addEventListener('change', function () {
+            document.getElementById('puntaje-texto').textContent = textos[this.value];
+            document.getElementById('btn-enviar').disabled = false;
+        });
+    });
+
+    document.getElementById('comentario').addEventListener('input', function () {
+        document.getElementById('comentario-count').textContent = this.value.length;
+    });
+</script>
+
+</body>
+</html>
