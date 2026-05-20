@@ -23,7 +23,6 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# Agregar manualmente por si RENDER_EXTERNAL_HOSTNAME no está disponible
 ALLOWED_HOSTS += [
     'trueque-market-app-1-0.onrender.com',
     'trueque-market-app-1-0-1.onrender.com',
@@ -39,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
     'app_trueques',
 ]
 
@@ -108,17 +109,29 @@ USE_I18N = True
 USE_TZ = True
 
 # ==============================
-# ARCHIVOS ESTÁTICOS Y MEDIA
+# ARCHIVOS ESTÁTICOS
 # ==============================
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'app_trueques' / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ==============================
+# CLOUDINARY — MEDIA FILES
+# ==============================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
 
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+MEDIA_URL = '/media/'
+
+# ==============================
+# OTROS
+# ==============================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
