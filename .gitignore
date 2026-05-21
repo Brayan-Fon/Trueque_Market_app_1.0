@@ -26,12 +26,13 @@ db.sqlite3
 *.env
 .env
 
-# ==============================
 # ARCHIVOS ESTÁTICOS Y MEDIA
-# ==============================
 media/
-#staticfiles/
-#static/
+staticfiles/
+
+# Permitir los estáticos del proyecto
+!app_trueques/static/
+!app_trueques/static/**
 
 # ==============================
 # ARCHIVOS DEL SISTEMA
@@ -60,5 +61,3 @@ __pycache__/
 *.bak
 *.tmp
 
-!app_trueques/static/
-!app_trueques/static/**
