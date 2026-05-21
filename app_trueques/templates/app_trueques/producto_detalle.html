@@ -33,7 +33,7 @@
             <!-- Imagen del producto -->
             <div class="detalle-imagen">
                 {% if producto.imagen %}
-                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                    <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}">
                 {% else %}
                     <div class="sin-imagen">📦 Sin imagen</div>
                 {% endif %}

@@ -42,7 +42,7 @@
             {% for producto in productos %}
             <div class="producto-card">
                 {% if producto.imagen %}
-                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                    <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}">
                 {% else %}
                     <img src="{% static 'app_trueques/img/no-image.png' %}" alt="Sin imagen">
                 {% endif %}

@@ -173,7 +173,7 @@
             <!-- FOTO -->
             <div class="foto-preview-wrap">
                 {% if perfil.foto %}
-                    <img src="{{ perfil.foto.url }}" alt="Foto" class="foto-preview" id="foto-img">
+                    <img src="{{ perfil.foto }}" alt="Foto" class="foto-preview" id="foto-img">
                 {% else %}
                     <div class="foto-placeholder" id="foto-placeholder">
                         {{ request.user.username|slice:":1"|upper }}

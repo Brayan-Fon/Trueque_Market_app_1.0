@@ -76,7 +76,7 @@
     <!-- CARD PRINCIPAL -->
     <div class="perfil-card">
         {% if perfil.foto %}
-            <img src="{{ perfil.foto.url }}" alt="Foto" class="perfil-foto">
+            <img src="{{ perfil.foto }}" alt="Foto" class="perfil-foto">
         {% else %}
             <div class="perfil-foto-placeholder">{{ perfil.user.username|slice:":1"|upper }}</div>
         {% endif %}
