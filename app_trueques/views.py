@@ -228,8 +228,10 @@ def editar_perfil_view(request):
         perfil.bio = request.POST.get('bio', '').strip()
         perfil.ciudad = request.POST.get('ciudad', '').strip()
 
-        if 'foto' in request.FILES:
-            perfil.foto = request.FILES['foto']
+       if 'foto' in request.FILES:
+         import cloudinary.uploader
+            resultado = cloudinary.uploader.upload(request.FILES['foto'])
+             perfil.foto = resultado['secure_url']
 
         request.user.first_name = request.POST.get('first_name', '').strip()
         request.user.last_name = request.POST.get('last_name', '').strip()
