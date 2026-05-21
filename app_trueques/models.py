@@ -54,7 +54,7 @@ class Perfil(models.Model):
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
-    imagen = models.ImageField(upload_to='productos/', null=True, blank=True)
+    imagen = models.CharField(max_length=500, null=True, blank=True)
     propietario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     latitud = models.FloatField(null=True, blank=True)

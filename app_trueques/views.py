@@ -157,9 +157,18 @@ def agregar_producto_view(request):
     if request.method == 'POST':
         nombre = request.POST['nombre']
         descripcion = request.POST['descripcion']
-        imagen = request.FILES.get('imagen')
         latitud = request.POST.get('latitud') or None
         longitud = request.POST.get('longitud') or None
+
+        import cloudinary.uploader
+
+        imagen = None
+
+        if request.FILES.get('imagen'):
+            resultado = cloudinary.uploader.upload(
+                request.FILES['imagen']
+            )
+            imagen = resultado['secure_url']
 
         Producto.objects.create(
             nombre=nombre,
@@ -169,6 +178,7 @@ def agregar_producto_view(request):
             latitud=latitud,
             longitud=longitud,
         )
+
         messages.success(request, '✅ Producto agregado correctamente')
         return redirect('marketplace')
 
