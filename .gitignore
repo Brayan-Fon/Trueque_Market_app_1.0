@@ -30,6 +30,7 @@ db.sqlite3
 media/
 staticfiles/
 
+
 # Permitir los estáticos del proyecto
 !app_trueques/static/
 !app_trueques/static/**
