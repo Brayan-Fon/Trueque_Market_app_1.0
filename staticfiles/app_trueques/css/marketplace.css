@@ -1,0 +1,131 @@
+/* ================================================
+   MARKETPLACE — CSS
+   ================================================ */
+
+.marketplace-hero {
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%);
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.marketplace-hero h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.marketplace-hero p {
+  font-size: 15px;
+  color: rgba(255,255,255,0.8);
+}
+
+.marketplace-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* Barra de acciones */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.actions-left { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions-right { display: flex; gap: 8px; }
+
+/* Grid de productos */
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.producto-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.producto-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(45,80,22,0.25);
+}
+
+.producto-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: var(--cream);
+}
+
+.producto-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.producto-card h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 17px;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.producto-card p {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.propietario {
+  font-size: 12px !important;
+  color: var(--text-soft) !important;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.botones-producto {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.botones-producto a {
+  flex: 1;
+  text-align: center;
+}
+
+/* Sin productos */
+.no-productos {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-soft);
+  grid-column: 1 / -1;
+}
+
+.no-productos p {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .marketplace-container { padding: 24px 16px; }
+  .marketplace-hero { padding: 32px 16px; }
+  .marketplace-hero h2 { font-size: 26px; }
+}

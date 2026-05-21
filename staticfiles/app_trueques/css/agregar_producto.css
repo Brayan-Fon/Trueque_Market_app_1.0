@@ -1,0 +1,46 @@
+/* ================================================
+   AGREGAR PRODUCTO — CSS
+   ================================================ */
+
+.form-container {
+  max-width: 640px;
+  margin: 40px auto;
+  padding: 0 24px 48px;
+  animation: fadeUp 0.4s ease both;
+}
+
+.form-container h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  color: var(--text);
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.form-container form {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  padding: 36px;
+  box-shadow: var(--shadow-sm);
+}
+
+.form-container .btn-submit {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  border-radius: var(--radius-md);
+  margin-top: 8px;
+}
+
+.ubicacion-status {
+  font-size: 12px;
+  font-weight: 500;
+  margin: 4px 0 8px;
+  min-height: 18px;
+}
+
+@media (max-width: 600px) {
+  .form-container { padding: 0 12px 32px; }
+  .form-container form { padding: 24px; }
+}
