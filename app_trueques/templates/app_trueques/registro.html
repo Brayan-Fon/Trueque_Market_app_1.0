@@ -155,11 +155,16 @@
 
                     <div id="metamap-wrapper" class="metamap-bloqueado">
                         <mati-button
-                            clientid="{{ metamap_client_id }}"
+                            clientId="{{ metamap_client_id }}"
                             flowId="{{ metamap_flow_id }}"
                             color="#1E3A8A"
                             textColor="#ffffff"
                         />
+                    </div>
+
+                    <!-- Debug info: If these are empty, Render env vars are not reaching Django -->
+                    <div style="display: none;" id="debug-metamap-vars">
+                        Client: '{{ metamap_client_id }}', Flow: '{{ metamap_flow_id }}'
                     </div>
 
                     <p style="font-size:11px; color:#999; margin-top:8px;" id="hint-cedula">
