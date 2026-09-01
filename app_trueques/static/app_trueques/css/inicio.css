@@ -108,4 +108,36 @@ header {
     margin-bottom: 10px;
     color: #1E3A8A; /* azul oscuro consistente con header */
 }
+/*FONDO DE INICIO*/
 
+body {
+    background-color: #f9f9f9;
+    background-image: url("../img/fondo_inicio.png");
+    background-repeat: repeat;
+    background-size: 180px; /* Ajusta el tamaño del logo */
+    background-attachment: fixed;
+    animation: moverFondo 40s linear infinite;
+}
+
+/* Movimiento sutil en diagonal */
+@keyframes moverFondo {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 300px -300px; /* movimiento diagonal */
+    }
+}
+
+/* Capa blanca translúcida para suavizar */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+    z-index: -1;
+}
