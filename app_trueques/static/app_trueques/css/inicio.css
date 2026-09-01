@@ -4,7 +4,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f0f4f8; /* color más suave y moderno */
     color: #333;
-    background-image: url('../img/fondo_inicio.jpg'); /* ruta de tu imagen de fondo */
+    background-image: url('../img/fondo_inicio.png'); /* ruta de tu imagen de fondo */
     background-size: cover; /* hace que la imagen cubra todo el fondo */
     background-position: center;
     background-repeat: no-repeat;
