@@ -1,3 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+    /* Premium Color Palette */
+    --color-primary: #4f46e5;      /* Indigo 600 */
+    --color-primary-hover: #4338ca;/* Indigo 700 */
+    --color-secondary: #8b5cf6;    /* Violet 500 */
+    --color-bg-light: #f8fafc;     /* Slate 50 */
+    --color-text-main: #1e293b;    /* Slate 800 */
+    --color-text-muted: #64748b;   /* Slate 500 */
+    --color-glass-bg: rgba(255, 255, 255, 0.7);
+    --color-glass-border: rgba(255, 255, 255, 0.5);
+    
+    /* Shadows & Transitions */
+    --shadow-soft: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --shadow-hover: 0 12px 40px 0 rgba(79, 70, 229, 0.2);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 22px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -5,9 +29,10 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f4f8;
-    color: #374151;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background-color: var(--color-bg-light);
+    color: var(--color-text-main);
+    -webkit-font-smoothing: antialiased;
 }
 
 /* -----------------------------
@@ -17,9 +42,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #1E3A8A; /* Azul oscuro */
+    background-color: var(--color-primary);
     color: white;
-    padding: 10px 20px;
+    padding: 12px 24px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .logo-title {
@@ -66,36 +92,46 @@ body {
    BOTONES GENERALES
    ----------------------------- */
 .btn-primary, .btn-secondary, .btn-submit {
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
-    transition: 0.3s;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
 }
 
 .btn-primary {
-    background-color: #3B82F6;
+    background-color: var(--color-primary);
     color: white;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
 }
 
 .btn-primary:hover {
-    background-color: #2563EB;
+    background-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
 }
 
 .btn-secondary {
-    background-color: #6B7280;
-    color: white;
+    background-color: #f1f5f9;
+    color: var(--color-text-main);
+    border: 1px solid #e2e8f0;
 }
 
 .btn-secondary:hover {
-    background-color: #4B5563;
+    background-color: #e2e8f0;
+    transform: translateY(-2px);
 }
 
 .btn-submit {
-    background-color: #3B82F6;
+    background-color: var(--color-primary);
     color: white;
-    border: none;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
 }
 
 .btn-submit:hover {
