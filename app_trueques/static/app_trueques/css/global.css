@@ -1,374 +1,314 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* ================================================
+   TRUEQUE MARKET — Global CSS
+   Tema: Moderno minimalista, cálido y orgánico
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+/* ---- Variables ---- */
+:root {
+  --cream:       #F5F0E8;
+  --cream-dark:  #EDE7D9;
+  --green:       #2D5016;
+  --green-mid:   #3E6B1F;
+  --green-light: #7DAF50;
+  --green-pale:  #E8F0DF;
+  --brown:       #6B4F2A;
+  --text:        #1C1C1A;
+  --text-mid:    #4A4740;
+  --text-soft:   #8A857C;
+  --white:       #FFFFFF;
+  --red:         #C0392B;
+  --red-light:   #FDECEA;
+  --border:      rgba(45, 80, 22, 0.15);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:   0 6px 24px rgba(0,0,0,0.08);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,0.10);
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   22px;
+  --radius-xl:   32px;
+  --transition:  0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f4f8;
-    color: #374151;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* -----------------------------
-   HEADER GLOBAL
-   ----------------------------- */
+/* ---- Tipografía ---- */
+h1, h2, h3 {
+  font-family: 'DM Serif Display', serif;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ================================================
+   HEADER
+   ================================================ */
+header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
 .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #1E3A8A; /* Azul oscuro */
-    color: white;
-    padding: 10px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .logo-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.logo {
-    width: 50px;
-    height: 50px;
+.logo-title .logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.logo-title h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--green);
+  letter-spacing: -0.3px;
 }
 
 .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .nav-right span {
-    font-weight: bold;
+  font-size: 14px;
+  color: var(--text-mid);
+  font-weight: 500;
 }
 
-/* -----------------------------
-   BOTÓN DE CERRAR SESIÓN
-   ----------------------------- */
-.nav-right .btn {
-    background-color: #e74c3c; /* rojo */
-    color: #fff;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+/* ================================================
+   BOTONES
+   ================================================ */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-volver,
+.btn-mis-chats,
+.btn-danger,
+.btn-ver,
+.btn-oferta,
+.btn-chat,
+.btn-submit,
+.btn-ubicacion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 50px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.nav-right .btn:hover {
-    background-color: #c0392b; /* rojo más oscuro al pasar el mouse */
+.btn-primary, .btn-submit {
+  background: var(--green);
+  color: var(--white);
+  padding: 10px 22px;
+}
+.btn-primary:hover, .btn-submit:hover {
+  background: var(--green-mid);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(45,80,22,0.25);
 }
 
-/* -----------------------------
-   BOTONES GENERALES
-   ----------------------------- */
-.btn-primary, .btn-secondary, .btn-submit {
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
+.btn-secondary, .btn-volver, .btn {
+  background: var(--cream-dark);
+  color: var(--text);
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover, .btn-volver:hover, .btn:hover {
+  background: var(--cream);
+  border-color: var(--green-light);
+  color: var(--green);
 }
 
-.btn-primary {
-    background-color: #3B82F6;
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #2563EB;
-}
-
-.btn-secondary {
-    background-color: #6B7280;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #4B5563;
-}
-
-.btn-submit {
-    background-color: #3B82F6;
-    color: white;
-    border: none;
-}
-
-.btn-submit:hover {
-    background-color: #2563EB;
-}
-
-/* -----------------------------
-   FORMULARIOS
-   ----------------------------- */
-.form-container {
-    max-width: 500px;
-    margin: 40px auto;
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-}
-
-.form-container h2 {
-    margin-bottom: 20px;
-    color: #1E3A8A;
-    text-align: center;
-}
-
-.form-container input[type="text"],
-.form-container input[type="email"],
-.form-container input[type="password"],
-.form-container textarea,
-.form-container input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #d1d5db;
-}
-
-.form-container textarea {
-    resize: vertical;
-}
-
-/* -----------------------------
-   GRID DE PRODUCTOS
-   ----------------------------- */
-.productos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
-
-.producto-card {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.producto-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 8px 12px rgba(0,0,0,0.15);
-}
-
-.producto-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-}
-
-.producto-card h3 {
-    margin: 10px;
-    color: #1E3A8A;
-}
-
-.producto-card p {
-    margin: 0 10px 10px 10px;
-}
-
-.producto-card .propietario {
-    font-size: 0.85rem;
-    color: #6B7280;
-}
-
-/* -----------------------------
-   SECCIONES DE BIENVENIDA
-   ----------------------------- */
-.welcome-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px 20px;
-}
-
-.welcome-card {
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.welcome-card h2 {
-    color: #1E3A8A;
-    margin-bottom: 10px;
-}
-
-.welcome-card p {
-    color: #374151;
-    margin-bottom: 20px;
-}
-
-.welcome-card .btn-action {
-    background-color: #3B82F6;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.welcome-card .btn-action:hover {
-    background-color: #2563EB;
-}
-
-/* -----------------------------
-   CARDS DE FUNCIONALIDADES
-   ----------------------------- */
-.features-section {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px;
-    padding: 20px;
-}
-
-.features-section .card {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    width: 250px;
-    text-align: center;
-}
-
-.features-section .card h3 {
-    color: #1E3A8A;
-    margin-bottom: 10px;
-}
-
-/* ===========================
-   DETALLE DE PRODUCTO
-   =========================== */
-.detalle-container {
-    display: flex;
-    justify-content: center;
-    padding: 40px;
-}
-
-.detalle-card {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.detalle-imagen {
-    width: 100%;
-    height: 350px;
-    object-fit: cover;
-    border-bottom: 3px solid #1E3A8A;
-}
-
-.detalle-info {
-    padding: 20px;
-}
-
-.detalle-info h2 {
-    color: #1E3A8A;
-}
-
-.detalle-botones {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-/* ===========================
-   CHAT DE NEGOCIACIÓN
-   =========================== */
-.chat-container {
-    display: flex;
-    justify-content: center;
-    padding: 40px;
-}
-
-.chat-box {
-    background-color: white;
-    border-radius: 10px;
-    padding: 30px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    width: 600px;
-}
-
-.mensajes {
-    border: 1px solid #ddd;
-    padding: 15px;
-    height: 250px;
-    overflow-y: auto;
-    margin-bottom: 20px;
-    border-radius: 5px;
-}
-
-.mensaje.otro {
-    background-color: #f0f4f8;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-.form-chat {
-    display: flex;
-    gap: 10px;
-}
-
-.form-chat input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
-
-.chat-volver {
-    margin-top: 15px;
-    text-align: center;
-}
-
-.resaltado {
-    color: #1E3A8A;
-    font-weight: bold;
-}
-
-/* Botón de cerrar sesión rojo */
-.btn-logout {
-    background-color: #dc2626 !important;
-}
-
-.btn-logout:hover {
-    background-color: #b91c1c !important;
-}
-
-/* BOTÓN MIS CHATS */
 .btn-mis-chats {
-    text-decoration: none;
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: white;
-    padding: 8px 18px;
-    border-radius: 12px;
-    font-weight: 600;
-    margin-right: 10px;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.9rem;
+  background: var(--green-pale);
+  color: var(--green);
+  padding: 8px 18px;
+  border: 1px solid rgba(45,80,22,0.2);
+}
+.btn-mis-chats:hover {
+  background: var(--green);
+  color: var(--white);
 }
 
-.btn-mis-chats:hover {
-    background: linear-gradient(135deg, #0ea5e9, #1e40af);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+.btn-danger {
+  background: var(--red-light);
+  color: var(--red);
+  padding: 8px 18px;
+  border: 1px solid rgba(192,57,43,0.2);
+}
+.btn-danger:hover {
+  background: var(--red);
+  color: var(--white);
+}
+
+.btn-ver {
+  background: var(--cream-dark);
+  color: var(--text);
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+.btn-ver:hover {
+  background: var(--green);
+  color: var(--white);
+  border-color: var(--green);
+}
+
+.btn-oferta, .btn-chat {
+  background: var(--green);
+  color: var(--white);
+  padding: 8px 16px;
+  font-size: 12px;
+}
+.btn-oferta:hover, .btn-chat:hover {
+  background: var(--green-mid);
+  transform: translateY(-1px);
+}
+
+.btn-ubicacion {
+  background: var(--green-pale);
+  color: var(--green);
+  padding: 10px 20px;
+  border: 1px solid rgba(45,80,22,0.2);
+}
+.btn-ubicacion:hover {
+  background: var(--green);
+  color: var(--white);
+}
+
+.btn-submit:disabled {
+  background: #C8C4BC !important;
+  color: #8A857C !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ================================================
+   ALERTS / MESSAGES
+   ================================================ */
+.alert {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.alert-success { background: var(--green-pale); color: var(--green); border-left: 3px solid var(--green); }
+.alert-error   { background: var(--red-light);  color: var(--red);   border-left: 3px solid var(--red); }
+.alert-warning { background: #FFF8E1; color: #856404; border-left: 3px solid #FFC107; }
+.alert-info    { background: #E8F4FD; color: #1565C0; border-left: 3px solid #1565C0; }
+
+/* ================================================
+   INPUTS
+   ================================================ */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"],
+textarea,
+select {
+  width: 100%;
+  padding: 11px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+  margin-bottom: 12px;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--green-light);
+  box-shadow: 0 0 0 3px rgba(45,80,22,0.08);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-soft);
+}
+
+textarea { resize: vertical; min-height: 100px; }
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 6px;
+}
+
+.form-group { margin-bottom: 4px; }
+
+/* ================================================
+   ANIMACIONES
+   ================================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fade-up  { animation: fadeUp  0.5s ease both; }
+.fade-in  { animation: fadeIn  0.4s ease both; }
+.delay-1  { animation-delay: 0.08s; }
+.delay-2  { animation-delay: 0.16s; }
+.delay-3  { animation-delay: 0.24s; }
+.delay-4  { animation-delay: 0.32s; }
+
+/* ================================================
+   RESPONSIVE
+   ================================================ */
+@media (max-width: 768px) {
+  .header-container { padding: 0 16px; }
+  .nav-right span   { display: none; }
 }
