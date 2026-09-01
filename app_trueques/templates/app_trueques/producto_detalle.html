@@ -86,8 +86,8 @@
 
     {% if producto.latitud and producto.longitud %}
     <script>
-        const lat = parseFloat("{{ producto.latitud }}");
-        const lng = parseFloat("{{ producto.longitud }}");
+        const lat = parseFloat("{{ producto.latitud }}".replace(',', '.'));
+        const lng = parseFloat("{{ producto.longitud }}".replace(',', '.'));
 
         // Zoom más alejado para no revelar la ubicación exacta
         const mapa = L.map('mapa').setView([lat, lng], 13);
