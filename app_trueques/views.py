@@ -44,7 +44,7 @@ def crear_verificacion_metamap(token, cedula):
         'Content-Type': 'application/json',
     }
     payload = {
-        'flowId': settings.METAMAP_CLIENT_ID,
+        'flowId': settings.METAMAP_FLOW_ID,
         'metadata': {'cedula': cedula}
     }
     response = requests.post(url, headers=headers, json=payload)
@@ -130,6 +130,7 @@ def registro_view(request):
     # GET — mostrar formulario
     context = {
         'metamap_client_id': settings.METAMAP_CLIENT_ID or '',
+        'metamap_flow_id': settings.METAMAP_FLOW_ID or '',
     }
     return render(request, 'app_trueques/registro.html', context)
 
