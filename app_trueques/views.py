@@ -22,35 +22,6 @@ pusher_client = pusher.Pusher(
 )
 
 
-# ======================
-# METAMAP
-# ======================
-def obtener_token_metamap():
-    url = 'https://api.getmati.com/oauth'
-    response = requests.post(url, data={
-        'grant_type': 'client_credentials',
-        'client_id': settings.METAMAP_CLIENT_ID,
-        'client_secret': settings.METAMAP_CLIENT_SECRET,
-    })
-    if response.status_code == 200:
-        return response.json().get('access_token')
-    return None
-
-
-def crear_verificacion_metamap(token, cedula):
-    url = 'https://api.getmati.com/v2/verifications'
-    headers = {
-        'Authorization': f'Bearer {token}',
-        'Content-Type': 'application/json',
-    }
-    payload = {
-        'flowId': settings.METAMAP_FLOW_ID,
-        'metadata': {'cedula': cedula}
-    }
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code in [200, 201]:
-        return response.json()
-    return None
 
 
 # ======================
@@ -100,7 +71,6 @@ def registro_view(request):
             cedula = request.POST['cedula']
             password1 = request.POST['password1']
             password2 = request.POST['password2']
-            metamap_verificado = request.POST.get('metamap_verificado', 'false')
 
             if password1 != password2:
                 messages.error(request, 'Las contraseñas no coinciden')
@@ -114,13 +84,9 @@ def registro_view(request):
                 messages.error(request, 'Ya existe una cuenta con esa cédula')
                 return redirect('registro')
 
-            if metamap_verificado != 'true':
-                messages.error(request, '⚠️ Debes verificar tu identidad antes de registrarte')
-                return redirect('registro')
-
             user = User.objects.create_user(username=username, email=email, password=password1)
             Perfil.objects.create(user=user, cedula=cedula, verificado=True)
-            messages.success(request, 'Usuario registrado y verificado correctamente ✅')
+            messages.success(request, 'Usuario registrado correctamente ✅')
             return redirect('login')
 
         except Exception as e:
@@ -128,11 +94,7 @@ def registro_view(request):
             raise
 
     # GET — mostrar formulario
-    context = {
-        'metamap_client_id': settings.METAMAP_CLIENT_ID or '',
-        'metamap_flow_id': settings.METAMAP_FLOW_ID or '',
-    }
-    return render(request, 'app_trueques/registro.html', context)
+    return render(request, 'app_trueques/registro.html')
 
 
 # ======================

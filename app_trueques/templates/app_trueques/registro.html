@@ -8,8 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/login.css' %}">
-    <!-- MetaMap SDK -->
-    <script src="https://web-button.getmati.com/button.js"></script>
+
     <style>
         .password-container {
             position: relative;
@@ -47,37 +46,6 @@
         .campo-msg.error { color: #e74c3c; }
         .campo-msg.ok    { color: #27ae60; }
 
-        .verificacion-box {
-            background: #f0f9ff;
-            border: 1.5px solid #bfdbfe;
-            border-radius: 10px;
-            padding: 16px;
-            margin: 12px 0;
-            text-align: center;
-        }
-        .verificacion-box p {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 12px;
-        }
-        .verificacion-status {
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        .verificacion-status.ok    { color: green; }
-        .verificacion-status.error { color: red; }
-
-        .btn-submit:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Bloquear botón MetaMap si cédula no es válida */
-        .metamap-bloqueado {
-            opacity: 0.4;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
@@ -145,37 +113,8 @@
                 </div>
                 <p class="campo-msg" id="msg-password2"></p>
 
-                <!-- CAMPO OCULTO -->
-                <input type="hidden" name="metamap_verificado" id="metamap_verificado" value="false">
-                <input type="hidden" id="cedula_verificada" value="">
-
-                <!-- SECCIÓN DE VERIFICACIÓN METAMAP -->
-                <div class="verificacion-box">
-                    <p>🔒 Ingresa tu cédula arriba y luego verifica tu identidad. La cédula debe coincidir con tu documento real.</p>
-
-                    <div id="metamap-wrapper" class="metamap-bloqueado">
-                        <mati-button
-                            clientId="{{ metamap_client_id }}"
-                            flowId="{{ metamap_flow_id }}"
-                            color="#1E3A8A"
-                            textColor="#ffffff"
-                        />
-                    </div>
-
-                    <!-- Debug info: If these are empty, Render env vars are not reaching Django -->
-                    <div style="display: none;" id="debug-metamap-vars">
-                        Client: '{{ metamap_client_id }}', Flow: '{{ metamap_flow_id }}'
-                    </div>
-
-                    <p style="font-size:11px; color:#999; margin-top:8px;" id="hint-cedula">
-                        ⬆️ Primero ingresa una cédula válida para habilitar la verificación
-                    </p>
-
-                    <p class="verificacion-status" id="verificacion-status"></p>
-                </div>
-
-                <button type="submit" class="btn-submit" id="btn-registrar" disabled>
-                    🔒 Verifica tu identidad primero
+                <button type="submit" class="btn-submit" id="btn-registrar">
+                    Registrarse
                 </button>
             </form>
 
@@ -184,8 +123,6 @@
     </div>
 
     <script>
-        let cedulaValida = false;
-        let metamapCompletado = false;
 
         // =====================
         // VALIDAR USUARIO
@@ -234,37 +171,16 @@
             // Solo números
             this.value = this.value.replace(/[^0-9]/g, '');
             const val = this.value.trim();
-            const msg = document.getElementById('msg-cedula');
-            const wrapper = document.getElementById('metamap-wrapper');
-            const hint = document.getElementById('hint-cedula');
-
-            // Si cambia la cédula, resetear verificación MetaMap
-            metamapCompletado = false;
-            cedulaValida = false;
-            document.getElementById('metamap_verificado').value = 'false';
-            document.getElementById('cedula_verificada').value = '';
-            document.getElementById('verificacion-status').textContent = '';
-            document.getElementById('btn-registrar').disabled = true;
-            document.getElementById('btn-registrar').textContent = '🔒 Verifica tu identidad primero';
-
             if (val === '') {
                 this.className = ''; msg.textContent = '';
-                wrapper.classList.add('metamap-bloqueado');
-                hint.style.display = 'block';
             } else if (val.length < 6 || val.length > 10) {
                 this.classList.add('input-error'); this.classList.remove('input-ok');
                 msg.textContent = '❌ La cédula debe tener entre 6 y 10 dígitos';
                 msg.className = 'campo-msg error';
-                wrapper.classList.add('metamap-bloqueado');
-                hint.style.display = 'block';
             } else {
                 this.classList.add('input-ok'); this.classList.remove('input-error');
-                msg.textContent = '✅ Cédula válida — ahora verifica tu identidad';
+                msg.textContent = '✅ Cédula válida';
                 msg.className = 'campo-msg ok';
-                // Habilitar botón MetaMap
-                wrapper.classList.remove('metamap-bloqueado');
-                hint.style.display = 'none';
-                cedulaValida = true;
             }
         });
 
@@ -313,38 +229,7 @@
             }
         }
 
-        // =====================
-        // EVENTOS METAMAP
-        // =====================
-        const matiButton = document.querySelector('mati-button');
 
-        // Verificación completada exitosamente
-        matiButton.addEventListener('mati:userFinishedSdk', function(e) {
-            const cedulaIngresada = document.getElementById('cedula').value.trim();
-
-            // Guardar cédula verificada y marcar como completado
-            document.getElementById('cedula_verificada').value = cedulaIngresada;
-            document.getElementById('metamap_verificado').value = 'true';
-            metamapCompletado = true;
-
-            document.getElementById('verificacion-status').textContent = '✅ Identidad verificada correctamente con cédula ' + cedulaIngresada;
-            document.getElementById('verificacion-status').className = 'verificacion-status ok';
-
-            // Habilitar botón de registro
-            const btn = document.getElementById('btn-registrar');
-            btn.disabled = false;
-            btn.textContent = '✅ Completar registro';
-        });
-
-        // Verificación cancelada
-        matiButton.addEventListener('mati:exitedSdk', function(e) {
-            document.getElementById('metamap_verificado').value = 'false';
-            metamapCompletado = false;
-            document.getElementById('verificacion-status').textContent = '❌ Verificación cancelada. Inténtalo de nuevo.';
-            document.getElementById('verificacion-status').className = 'verificacion-status error';
-            document.getElementById('btn-registrar').disabled = true;
-            document.getElementById('btn-registrar').textContent = '🔒 Verifica tu identidad primero';
-        });
 
         // =====================
         // MOSTRAR/OCULTAR CONTRASEÑA
