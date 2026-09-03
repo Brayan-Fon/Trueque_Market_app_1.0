@@ -49,7 +49,7 @@
                 <div class="producto-card-body">
                     <h3>{{ producto.nombre }}</h3>
                     <p>{{ producto.descripcion|truncatechars:100 }}</p>
-                    <p class="propietario">Por: <strong>{{ producto.propietario.username }}</strong></p>
+                    <p class="propietario">Por: <strong><a href="{% url 'perfil_publico' producto.propietario.username %}" style="text-decoration: none; color: inherit; font-weight: bold;">{{ producto.propietario.username }}</a></strong></p>
                     <div class="botones-producto">
                         <a href="{% url 'producto_detalle' producto.id %}" class="btn-ver">🔍 Ver Detalle</a>
                         <a href="{% url 'chat' producto.id %}" class="btn-oferta">💬 Ofertar</a>

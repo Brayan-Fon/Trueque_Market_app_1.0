@@ -45,7 +45,7 @@
                 <p class="detalle-desc">{{ producto.descripcion }}</p>
 
                 <div class="detalle-meta">
-                    <p>👤 Publicado por <strong>{{ producto.propietario.username }}</strong></p>
+                    <p>👤 Publicado por <strong><a href="{% url 'perfil_publico' producto.propietario.username %}" style="text-decoration: none; color: inherit;">{{ producto.propietario.username }}</a></strong></p>
                     <p>📅 {{ producto.fecha_creacion|date:"d/m/Y" }}</p>
                 </div>
 
