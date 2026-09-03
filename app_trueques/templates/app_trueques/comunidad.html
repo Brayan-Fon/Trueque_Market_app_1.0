@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidad - Trueque Market</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
+    <style>
+        body { background: var(--cream); }
+        .comunidad-container { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+        
+        .comunidad-header {
+            text-align: center;
+            margin-bottom: 48px;
+            animation: fadeUp 0.6s ease both;
+        }
+        .comunidad-header h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 36px;
+            color: var(--green);
+            margin-bottom: 12px;
+        }
+        .comunidad-header p {
+            font-size: 16px;
+            color: var(--text-mid);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .usuarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .usuario-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+            color: inherit;
+            transition: all var(--transition);
+        }
+        .usuario-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(45,80,22,0.25);
+        }
+
+        .usuario-foto {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--green-pale);
+            flex-shrink: 0;
+        }
+        .usuario-foto-placeholder {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--green-pale);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--green-dark);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .usuario-info { flex: 1; min-width: 0; }
+        .usuario-nombre {
+            font-family: 'DM Serif Display', serif;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .usuario-username {
+            font-size: 13px;
+            color: var(--green-mid);
+            margin-bottom: 6px;
+        }
+        .usuario-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-soft);
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-icon { color: #f59e0b; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <div class="logo-title">
+            <img src="{% static 'app_trueques/img/logo.png' %}" alt="Logo" class="logo">
+            <h1>Trueque Market</h1>
+        </div>
+        <div class="nav-right">
+            <span class="user-greeting">Hola, {{ user.username }} 👋</span>
+            <a href="{% url 'marketplace' %}" class="btn">← Marketplace</a>
+            <a href="{% url 'perfil' %}" class="btn">👤 Mi perfil</a>
+        </div>
+    </div>
+</header>
+
+<main class="comunidad-container">
+    <div class="comunidad-header">
+        <h1>Conoce a nuestra comunidad</h1>
+        <p>Descubre a otros usuarios, mira lo que ofrecen y crea conexiones para realizar trueques fantásticos.</p>
+    </div>
+
+    <div class="usuarios-grid">
+        {% for perfil_usuario in perfiles %}
+            <a href="{% url 'perfil_publico' perfil_usuario.user.username %}" class="usuario-card">
+                {% if perfil_usuario.foto %}
+                    <img src="{{ perfil_usuario.foto }}" alt="Foto" class="usuario-foto">
+                {% else %}
+                    <div class="usuario-foto-placeholder">{{ perfil_usuario.user.username|slice:":1"|upper }}</div>
+                {% endif %}
+                
+                <div class="usuario-info">
+                    <div class="usuario-nombre">
+                        {% if perfil_usuario.user.first_name %}
+                            {{ perfil_usuario.user.first_name }} {{ perfil_usuario.user.last_name }}
+                        {% else %}
+                            {{ perfil_usuario.user.username }}
+                        {% endif %}
+                    </div>
+                    <div class="usuario-username">@{{ perfil_usuario.user.username }}</div>
+                    
+                    <div class="usuario-stats">
+                        <div class="stat-item">
+                            📦 {{ perfil_usuario.user.productos.count }} arts.
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">⭐</span> {{ perfil_usuario.promedio_calificacion }}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        {% empty %}
+            <p style="grid-column: 1 / -1; text-align: center; color: var(--text-soft); padding: 40px;">
+                Aún no hay otros usuarios en la comunidad.
+            </p>
+        {% endfor %}
+    </div>
+</main>
+
+</body>
+</html>

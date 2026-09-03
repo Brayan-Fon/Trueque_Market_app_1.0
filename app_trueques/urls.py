@@ -26,6 +26,10 @@ urlpatterns = [
     # Calificaciones
     path('calificar/<str:username>/', views.calificar_view, name='calificar'),
 
+    # Comunidad
+    path('comunidad/', views.comunidad_view, name='comunidad'),
+    path('producto/<int:producto_id>/estado/', views.toggle_disponible_view, name='toggle_disponible'),
+
     # Trueques
     path('trueques/', views.trueques_view, name='trueques'),
     path('trueque/<int:trueque_id>/completar/', views.completar_trueque_view, name='completar_trueque'),

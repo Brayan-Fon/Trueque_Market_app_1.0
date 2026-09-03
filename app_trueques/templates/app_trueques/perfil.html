@@ -171,6 +171,7 @@
             overflow: hidden;
             border: 1px solid #e5e7eb;
             transition: transform 0.2s;
+            position: relative;
         }
 
         .producto-mini:hover {
@@ -411,16 +412,29 @@
         {% if productos %}
             <div class="productos-grid-perfil">
                 {% for producto in productos %}
-                <div class="producto-mini">
+                <div class="producto-mini {% if not producto.disponible %}vendido{% endif %}">
                     {% if producto.imagen %}
-                        <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}">
+                        <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}" {% if not producto.disponible %}style="opacity: 0.5; filter: grayscale(100%);"{% endif %}>
                     {% else %}
-                        <div class="producto-mini-sin-img">📦</div>
+                        <div class="producto-mini-sin-img" {% if not producto.disponible %}style="opacity: 0.5;"{% endif %}>📦</div>
                     {% endif %}
+                    
+                    {% if not producto.disponible %}
+                        <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2;">VENDIDO</div>
+                    {% endif %}
+
                     <div class="producto-mini-info">
-                        <h4>{{ producto.nombre }}</h4>
+                        <h4 {% if not producto.disponible %}style="color: #6b7280; text-decoration: line-through;"{% endif %}>{{ producto.nombre }}</h4>
                         <div class="producto-mini-acciones">
                             <a href="{% url 'producto_detalle' producto.id %}" class="btn-mini btn-mini-ver">Ver</a>
+                            
+                            <form method="POST" action="{% url 'toggle_disponible' producto.id %}" style="flex:1;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-mini" style="width:100%; background: #f59e0b; color: white;">
+                                    {% if producto.disponible %}Vendido{% else %}Reactivar{% endif %}
+                                </button>
+                            </form>
+
                             <form method="POST" action="{% url 'eliminar_producto' producto.id %}" style="flex:1;" onsubmit="return confirm('¿Eliminar este producto?')">
                                 {% csrf_token %}
                                 <button type="submit" class="btn-mini btn-mini-eliminar" style="width:100%;">Eliminar</button>

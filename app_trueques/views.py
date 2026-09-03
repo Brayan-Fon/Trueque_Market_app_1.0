@@ -436,3 +436,26 @@ def logout_view(request):
     logout(request)
     messages.success(request, '👋 Has cerrado sesión correctamente.')
     return redirect('login')
+
+# ======================
+# COMUNIDAD
+# ======================
+@login_required
+def comunidad_view(request):
+    # Fetch all profiles except the current user
+    perfiles = Perfil.objects.exclude(user=request.user).select_related('user')
+    context = {'perfiles': perfiles}
+    return render(request, 'app_trueques/comunidad.html', context)
+
+# ======================
+# MARCAR COMO VENDIDO / DISPONIBLE
+# ======================
+@login_required
+def toggle_disponible_view(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id, propietario=request.user)
+    producto.disponible = not producto.disponible
+    producto.save()
+    
+    estado = "disponible" if producto.disponible else "marcado como vendido/intercambiado"
+    messages.success(request, f'✅ Producto "{producto.nombre}" {estado}.')
+    return redirect('perfil')
