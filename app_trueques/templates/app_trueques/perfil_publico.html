@@ -138,7 +138,7 @@
                 {% for producto in productos %}
                 <a href="{% url 'producto_detalle' producto.id %}" class="producto-mini">
                     {% if producto.imagen %}
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                        <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}">
                     {% else %}
                         <div class="producto-mini-sin-img">📦</div>
                     {% endif %}
