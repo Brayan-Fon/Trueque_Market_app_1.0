@@ -145,7 +145,11 @@
 
             <div class="form-group">
                 <label for="imagen">Imagen del producto</label>
-                <input type="file" id="imagen" name="imagen" accept="image/*">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="imagen" name="imagen" accept="image/*" style="flex: 1;">
+                    <button type="button" id="btn-ia-analizar" class="btn-submit" style="margin-top: 0; padding: 10px 14px; background: #6366f1; border-radius: 8px;">✨ Autocompletar con IA</button>
+                </div>
+                <p id="ia-status" style="font-size: 13px; color: #6366f1; margin-top: 5px; display: none;"></p>
             </div>
 
             <!-- Coordenadas ocultas -->
@@ -424,6 +428,56 @@
                 e.preventDefault();
                 alert('⚠️ Por favor selecciona una zona antes de publicar.\nUsa el buscador de barrio o el GPS.');
             }
+        });
+        // =====================
+        // AUTOCOMPLETAR CON IA
+        // =====================
+        document.getElementById('btn-ia-analizar').addEventListener('click', function() {
+            const inputImagen = document.getElementById('imagen');
+            if (!inputImagen.files || inputImagen.files.length === 0) {
+                alert('⚠️ Primero selecciona una imagen del producto.');
+                return;
+            }
+
+            const status = document.getElementById('ia-status');
+            const btn = this;
+            
+            status.style.display = 'block';
+            status.textContent = '⏳ Analizando imagen con IA (Gemini)...';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            const formData = new FormData();
+            formData.append('imagen', inputImagen.files[0]);
+
+            fetch('{% url "analizar_imagen_ia" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    if (data.nombre) document.getElementById('nombre').value = data.nombre;
+                    if (data.descripcion) document.getElementById('descripcion').value = data.descripcion;
+                    status.textContent = '✅ ¡Listo! Revisa la información sugerida.';
+                    status.style.color = 'green';
+                } else {
+                    status.textContent = '❌ ' + (data.error || 'Error al analizar la imagen.');
+                    status.style.color = 'red';
+                }
+            })
+            .catch(err => {
+                status.textContent = '❌ Error de red.';
+                status.style.color = 'red';
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                setTimeout(() => { if (status.style.color === 'green') status.style.display = 'none'; }, 5000);
+            });
         });
     </script>
 

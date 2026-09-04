@@ -110,6 +110,8 @@ class Mensaje(models.Model):
     receptor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mensajes_recibidos')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='mensajes')
     contenido = models.TextField()
+    es_seguro = models.BooleanField(default=True)
+    advertencia_ia = models.CharField(max_length=255, blank=True, null=True)
     fecha_envio = models.DateTimeField(auto_now_add=True)
 
     class Meta:

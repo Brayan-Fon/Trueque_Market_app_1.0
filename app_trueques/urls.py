@@ -10,6 +10,7 @@ urlpatterns = [
     # Marketplace y productos
     path('marketplace/', views.marketplace_view, name='marketplace'),
     path('agregar-producto/', views.agregar_producto_view, name='agregar_producto'),
+    path('analizar-imagen/', views.analizar_imagen_ia, name='analizar_imagen_ia'),
     path('producto/<int:producto_id>/', views.producto_detalle_view, name='producto_detalle'),
     path('producto/<int:producto_id>/eliminar/', views.eliminar_producto_view, name='eliminar_producto'),
 

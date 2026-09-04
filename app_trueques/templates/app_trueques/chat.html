@@ -37,6 +37,9 @@
                 <div class="mensaje {% if mensaje.emisor == request.user %}propio{% else %}otro{% endif %}">
                     <span class="mensaje-usuario">{{ mensaje.emisor.username }}</span>
                     <p class="mensaje-contenido">{{ mensaje.contenido }}</p>
+                    {% if not mensaje.es_seguro %}
+                        <div class="alerta-seguridad">⚠️ Guardián IA: {{ mensaje.advertencia_ia }}</div>
+                    {% endif %}
                     <span class="mensaje-hora">{{ mensaje.fecha_envio|date:"H:i" }}</span>
                 </div>
             {% empty %}
@@ -87,9 +90,15 @@
             const ahora = new Date();
             const hora = ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0');
 
+            let alertaHtml = '';
+            if (data.es_seguro === false) {
+                alertaHtml = `<div class="alerta-seguridad">⚠️ Guardián IA: ${data.advertencia_ia}</div>`;
+            }
+
             div.innerHTML = `
                 <span class="mensaje-usuario">${data.emisor}</span>
                 <p class="mensaje-contenido">${data.mensaje}</p>
+                ${alertaHtml}
                 <span class="mensaje-hora">${hora}</span>
             `;
 

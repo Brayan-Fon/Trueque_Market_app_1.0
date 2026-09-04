@@ -11,7 +11,10 @@ import json
 import requests
 import traceback
 from .models import Perfil, Producto, Mensaje, Calificacion, Trueque
+import os
+import google.generativeai as genai
 
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 # Configuración de Pusher
 pusher_client = pusher.Pusher(
     app_id='2143654',
@@ -146,6 +149,41 @@ def agregar_producto_view(request):
         return redirect('marketplace')
 
     return render(request, 'app_trueques/agregar_producto.html')
+
+
+# ======================
+# ANALIZAR IMAGEN IA
+# ======================
+@login_required
+def analizar_imagen_ia(request):
+    if request.method == 'POST' and request.FILES.get('imagen'):
+        try:
+            from PIL import Image
+            
+            imagen_file = request.FILES['imagen']
+            imagen_pil = Image.open(imagen_file)
+            
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            prompt = """Analiza la imagen de este producto para un mercado de trueques.
+Genera un JSON con este formato:
+{
+  "nombre": "Un título corto y atractivo (max 50 chars)",
+  "descripcion": "Una descripción que resalte características y termine con 'Valor estimado: $X USD'."
+}
+"""
+            response = model.generate_content([prompt, imagen_pil])
+            texto_respuesta = response.text.replace('```json', '').replace('```', '').strip()
+            ia_data = json.loads(texto_respuesta)
+            
+            return JsonResponse({
+                'status': 'ok',
+                'nombre': ia_data.get('nombre', ''),
+                'descripcion': ia_data.get('descripcion', '')
+            })
+        except Exception as e:
+            print("Error analizando imagen:", e)
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Mala petición'}, status=400)
 
 
 # ======================
@@ -373,6 +411,24 @@ def enviar_mensaje(request, producto_id):
         if not contenido:
             return JsonResponse({'error': 'Mensaje vacío'}, status=400)
 
+        # --- GUARDIÁN DE IA ---
+        es_seguro = True
+        advertencia_ia = ""
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            prompt = f"""Analiza el siguiente mensaje de un chat de intercambios. Determina si el mensaje contiene intentos de estafa, peticiones de tarjetas de crédito, o amenazas explícitas. 
+Responde con un JSON estricto en este formato: {{"seguro": true/false, "motivo": "razón si no es seguro o vacío"}}
+Mensaje a analizar: "{contenido}"
+"""
+            response = model.generate_content(prompt)
+            texto_respuesta = response.text.replace('```json', '').replace('```', '').strip()
+            ia_data = json.loads(texto_respuesta)
+            es_seguro = ia_data.get('seguro', True)
+            advertencia_ia = ia_data.get('motivo', '')
+        except Exception as e:
+            print("Error Guardián IA:", e)
+        # --- FIN GUARDIÁN ---
+
         producto = get_object_or_404(Producto, id=producto_id)
         propietario = producto.propietario
 
@@ -392,12 +448,16 @@ def enviar_mensaje(request, producto_id):
             emisor=request.user,
             receptor=otro_usuario,
             producto=producto,
-            contenido=contenido
+            contenido=contenido,
+            es_seguro=es_seguro,
+            advertencia_ia=advertencia_ia
         )
 
         pusher_client.trigger(f'chat-{producto_id}', 'nuevo-mensaje', {
             'mensaje': contenido,
             'emisor': request.user.username,
+            'es_seguro': es_seguro,
+            'advertencia_ia': advertencia_ia
         })
 
         return JsonResponse({'status': 'ok'})
