@@ -157,6 +157,9 @@ def agregar_producto_view(request):
 @login_required
 def analizar_imagen_ia(request):
     if request.method == 'POST' and request.FILES.get('imagen'):
+        if not os.environ.get("GEMINI_API_KEY"):
+            return JsonResponse({'error': 'La clave GEMINI_API_KEY no está configurada. Por favor añádela a tus variables de entorno.'}, status=400)
+            
         try:
             from PIL import Image
             

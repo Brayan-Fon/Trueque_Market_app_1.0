@@ -44,3 +44,38 @@
   .form-container { padding: 0 12px 32px; }
   .form-container form { padding: 24px; }
 }
+
+.ia-upload-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.ia-upload-group input {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 0 !important;
+}
+.btn-ia {
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 11px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: all var(--transition);
+}
+.btn-ia:hover {
+    background: #4f46e5;
+    transform: translateY(-1px);
+}
+.btn-ia:disabled {
+    background: #C8C4BC;
+    color: #8A857C;
+    cursor: not-allowed;
+    transform: none;
+}
