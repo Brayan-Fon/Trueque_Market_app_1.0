@@ -52,8 +52,17 @@ class Perfil(models.Model):
 # PRODUCTOS PARA TRUEQUES
 # ======================
 class Producto(models.Model):
+    CATEGORIAS = [
+        ('electronica', 'Electrónica'),
+        ('ropa', 'Ropa'),
+        ('hogar', 'Hogar'),
+        ('deportes', 'Deportes'),
+        ('vehiculos', 'Vehículos'),
+        ('otros', 'Otros'),
+    ]
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
+    categoria = models.CharField(max_length=20, choices=CATEGORIAS, default='otros')
     imagen = models.CharField(max_length=500, null=True, blank=True)
     propietario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos')
     fecha_creacion = models.DateTimeField(auto_now_add=True)

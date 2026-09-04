@@ -144,6 +144,18 @@
             </div>
 
             <div class="form-group">
+                <label for="categoria">Categoría</label>
+                <select id="categoria" name="categoria" required style="width: 100%; padding: 12px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; font-family: inherit; margin-top: 5px; background: white; transition: background-color 0.3s ease;">
+                    <option value="electronica">Electrónica</option>
+                    <option value="ropa">Ropa</option>
+                    <option value="hogar">Hogar</option>
+                    <option value="deportes">Deportes</option>
+                    <option value="vehiculos">Vehículos</option>
+                    <option value="otros" selected>Otros</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label for="imagen">Imagen del producto</label>
                 <div class="ia-upload-group">
                     <input type="file" id="imagen" name="imagen" accept="image/*">
@@ -462,6 +474,12 @@
                 if (data.status === 'ok') {
                     if (data.nombre) document.getElementById('nombre').value = data.nombre;
                     if (data.descripcion) document.getElementById('descripcion').value = data.descripcion;
+                    if (data.categoria) {
+                        const selectCategoria = document.getElementById('categoria');
+                        selectCategoria.value = data.categoria;
+                        selectCategoria.style.backgroundColor = '#dcfce7'; // green flash
+                        setTimeout(() => { selectCategoria.style.backgroundColor = 'white'; }, 2000);
+                    }
                     status.textContent = '✅ ¡Listo! Revisa la información sugerida.';
                     status.style.color = 'green';
                 } else {

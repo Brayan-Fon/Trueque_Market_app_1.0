@@ -111,8 +111,12 @@ def inicio_view(request):
 # MARKETPLACE
 # ======================
 def marketplace_view(request):
-    productos = Producto.objects.filter(disponible=True).order_by('-fecha_creacion')
-    return render(request, 'app_trueques/marketplace.html', {'productos': productos})
+    categoria = request.GET.get('cat')
+    productos = Producto.objects.filter(disponible=True)
+    if categoria and categoria != 'todos':
+        productos = productos.filter(categoria=categoria)
+    productos = productos.order_by('-fecha_creacion')
+    return render(request, 'app_trueques/marketplace.html', {'productos': productos, 'categoria_actual': categoria or 'todos'})
 
 
 # ======================
@@ -123,6 +127,7 @@ def agregar_producto_view(request):
     if request.method == 'POST':
         nombre = request.POST['nombre']
         descripcion = request.POST['descripcion']
+        categoria = request.POST.get('categoria', 'otros')
         latitud = request.POST.get('latitud') or None
         longitud = request.POST.get('longitud') or None
 
@@ -139,6 +144,7 @@ def agregar_producto_view(request):
         Producto.objects.create(
             nombre=nombre,
             descripcion=descripcion,
+            categoria=categoria,
             imagen=imagen,
             propietario=request.user,
             latitud=latitud,
@@ -171,7 +177,8 @@ def analizar_imagen_ia(request):
 Genera un JSON con este formato:
 {
   "nombre": "Un título corto y atractivo (max 50 chars)",
-  "descripcion": "Una descripción que resalte características y termine con 'Valor estimado: $X USD'."
+  "descripcion": "Una descripción que resalte características y termine con 'Valor estimado: $X USD'.",
+  "categoria": "Una de estas opciones estrictamente: electronica, ropa, hogar, deportes, vehiculos, otros"
 }
 """
             response = model.generate_content([prompt, imagen_pil])
@@ -181,7 +188,8 @@ Genera un JSON con este formato:
             return JsonResponse({
                 'status': 'ok',
                 'nombre': ia_data.get('nombre', ''),
-                'descripcion': ia_data.get('descripcion', '')
+                'descripcion': ia_data.get('descripcion', ''),
+                'categoria': ia_data.get('categoria', 'otros')
             })
         except Exception as e:
             print("Error analizando imagen:", e)

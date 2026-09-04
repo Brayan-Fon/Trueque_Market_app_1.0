@@ -9,6 +9,35 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/marketplace.css' %}">
+    <style>
+        .categorias-filtros::-webkit-scrollbar {
+            height: 4px;
+        }
+        .categorias-filtros::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+        .pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background-color: #ede9df;
+            border: 1px solid #dedac9;
+            color: #222;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        .pill:hover {
+            background-color: #e2dec1;
+        }
+        .pill.activo {
+            background-color: #2e4d1f;
+            color: white;
+            border-color: #2e4d1f;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,6 +60,17 @@
     </div>
 
     <main class="marketplace-container">
+        <!-- Filtros de Categorías -->
+        <div class="categorias-filtros" style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
+            <a href="?cat=todos" class="pill {% if categoria_actual == 'todos' %}activo{% endif %}">Todos</a>
+            <a href="?cat=electronica" class="pill {% if categoria_actual == 'electronica' %}activo{% endif %}">Electrónica</a>
+            <a href="?cat=ropa" class="pill {% if categoria_actual == 'ropa' %}activo{% endif %}">Ropa</a>
+            <a href="?cat=hogar" class="pill {% if categoria_actual == 'hogar' %}activo{% endif %}">Hogar</a>
+            <a href="?cat=deportes" class="pill {% if categoria_actual == 'deportes' %}activo{% endif %}">Deportes</a>
+            <a href="?cat=vehiculos" class="pill {% if categoria_actual == 'vehiculos' %}activo{% endif %}">Vehículos</a>
+            <a href="?cat=otros" class="pill {% if categoria_actual == 'otros' %}activo{% endif %}">Otros</a>
+        </div>
+
         <div class="actions">
             <div class="actions-left">
                 <a href="{% url 'agregar_producto' %}" class="btn-primary">+ Agregar Producto</a>
