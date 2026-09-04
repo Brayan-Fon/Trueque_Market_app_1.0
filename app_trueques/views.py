@@ -442,10 +442,20 @@ Mensaje a analizar: "{contenido}"
 @login_required
 def enviar_mensaje(request, producto_id):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        contenido = data.get('mensaje', '').strip()
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            contenido = data.get('mensaje', '').strip()
+            audio_url = None
+        else:
+            contenido = request.POST.get('mensaje', '').strip()
+            audio_file = request.FILES.get('audio')
+            audio_url = None
+            if audio_file:
+                import cloudinary.uploader
+                resultado = cloudinary.uploader.upload(audio_file, resource_type='video')
+                audio_url = resultado['secure_url']
 
-        if not contenido:
+        if not contenido and not audio_url:
             return JsonResponse({'error': 'Mensaje vacío'}, status=400)
 
         producto = get_object_or_404(Producto, id=producto_id)
@@ -469,6 +479,7 @@ def enviar_mensaje(request, producto_id):
             receptor=otro_usuario,
             producto=producto,
             contenido=contenido,
+            audio=audio_url,
             es_seguro=True,
             advertencia_ia=""
         )
@@ -477,21 +488,24 @@ def enviar_mensaje(request, producto_id):
         pusher_client.trigger(f'chat-{producto_id}', 'nuevo-mensaje', {
             'id': str(mensaje_obj.id),
             'mensaje': contenido,
+            'audio': audio_url,
             'emisor': request.user.username,
             'es_seguro': True,
             'advertencia_ia': ""
         })
 
         # 2. Enviar evento de notificación global al receptor
+        noti_mensaje = "🎵 Mensaje de voz" if audio_url else contenido
         pusher_client.trigger(f'user-{otro_usuario.id}', 'nueva-notificacion', {
             'titulo': f'Nuevo mensaje de {request.user.username}',
-            'mensaje': contenido,
+            'mensaje': noti_mensaje,
             'url': f'/chat/{producto_id}/'
         })
 
-        # 3. Lanzar hilo de IA en segundo plano
-        t = threading.Thread(target=_analizar_mensaje_background, args=(mensaje_obj.id, contenido, producto_id, pusher_client))
-        t.start()
+        # 3. Lanzar hilo de IA en segundo plano (solo si hay contenido de texto)
+        if contenido:
+            t = threading.Thread(target=_analizar_mensaje_background, args=(mensaje_obj.id, contenido, producto_id, pusher_client))
+            t.start()
 
         return JsonResponse({'status': 'ok'})
 

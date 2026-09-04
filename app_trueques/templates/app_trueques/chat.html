@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_trueques/css/global.css' %}">
     <link rel="stylesheet" href="{% static 'app_trueques/css/chat.css' %}">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.18.3/index.js"></script>
 </head>
 <body>
 
@@ -36,7 +37,12 @@
             {% for mensaje in mensajes %}
                 <div class="mensaje {% if mensaje.emisor == request.user %}propio{% else %}otro{% endif %}" id="mensaje-{{ mensaje.id }}">
                     <span class="mensaje-usuario">{{ mensaje.emisor.username }}</span>
-                    <p class="mensaje-contenido">{{ mensaje.contenido }}</p>
+                    {% if mensaje.contenido %}
+                        <p class="mensaje-contenido">{{ mensaje.contenido }}</p>
+                    {% endif %}
+                    {% if mensaje.audio %}
+                        <audio controls src="{{ mensaje.audio }}" style="max-width: 100%; margin-top: 5px;"></audio>
+                    {% endif %}
                     {% if not mensaje.es_seguro %}
                         <div class="alerta-seguridad">⚠️ Guardián IA: {{ mensaje.advertencia_ia }}</div>
                     {% endif %}
@@ -48,9 +54,18 @@
         </div>
 
         <!-- Input para enviar mensaje -->
-        <div class="chat-input">
-            <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
-            <button id="btn-enviar">Enviar ➤</button>
+        <div class="chat-input" style="position: relative; display: flex; align-items: center; gap: 8px; padding: 10px;">
+            <button id="btn-emoji" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 0 5px;" type="button">😀</button>
+            
+            <div id="emoji-picker-container" style="display: none; position: absolute; bottom: 65px; left: 10px; z-index: 100; box-shadow: var(--shadow-md); border-radius: 8px; overflow: hidden;">
+                <emoji-picker></emoji-picker>
+            </div>
+
+            <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." autocomplete="off" style="flex: 1; margin: 0;">
+            
+            <button id="btn-enviar" type="button" class="btn-submit" style="display: none; margin: 0;">Enviar ➤</button>
+            <button id="btn-grabar" type="button" style="background: var(--red); border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; margin: 0; padding: 0;">🎙️</button>
+            <button id="btn-detener" type="button" style="display: none; background: #333; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; color: white; align-items: center; justify-content: center; font-size: 18px; margin: 0; padding: 0;">⏹️</button>
         </div>
 
     </main>
@@ -96,9 +111,13 @@
                 alertaHtml = `<div class="alerta-seguridad">⚠️ Guardián IA: ${data.advertencia_ia}</div>`;
             }
 
+            let contenidoHtml = '';
+            if (data.mensaje) contenidoHtml += `<p class="mensaje-contenido">${data.mensaje}</p>`;
+            if (data.audio) contenidoHtml += `<audio controls src="${data.audio}" style="max-width: 100%; margin-top: 5px;"></audio>`;
+
             div.innerHTML = `
                 <span class="mensaje-usuario">${data.emisor}</span>
-                <p class="mensaje-contenido">${data.mensaje}</p>
+                ${contenidoHtml}
                 ${alertaHtml}
                 <span class="mensaje-hora">${hora}</span>
             `;
@@ -120,7 +139,7 @@
             }
         });
 
-        // Enviar mensaje
+        // Enviar mensaje de texto
         function enviarMensaje() {
             const mensaje = input.value.trim();
             if (!mensaje) return;
@@ -136,12 +155,92 @@
 
             input.value = '';
             input.focus();
+            toggleSendButton();
+            document.getElementById('emoji-picker-container').style.display = 'none';
         }
 
         document.getElementById('btn-enviar').addEventListener('click', enviarMensaje);
         input.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') enviarMensaje();
         });
+
+        // Emojis y toggle de botones
+        const btnEnviar = document.getElementById('btn-enviar');
+        const btnGrabar = document.getElementById('btn-grabar');
+        const btnDetener = document.getElementById('btn-detener');
+
+        function toggleSendButton() {
+            if (input.value.trim().length > 0) {
+                btnEnviar.style.display = 'block';
+                btnGrabar.style.display = 'none';
+            } else {
+                btnEnviar.style.display = 'none';
+                btnGrabar.style.display = 'flex';
+            }
+        }
+        input.addEventListener('input', toggleSendButton);
+
+        document.getElementById('btn-emoji').addEventListener('click', () => {
+            const container = document.getElementById('emoji-picker-container');
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.querySelector('emoji-picker').addEventListener('emoji-click', event => {
+            input.value += event.detail.unicode;
+            input.focus();
+            toggleSendButton();
+        });
+
+        // Notas de voz (MediaRecorder)
+        let mediaRecorder;
+        let audioChunks = [];
+
+        btnGrabar.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    enviarAudio(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                btnGrabar.style.display = 'none';
+                btnDetener.style.display = 'flex';
+                input.placeholder = "Grabando... (⏹️ para enviar)";
+                input.disabled = true;
+            } catch (err) {
+                alert("No se pudo acceder al micrófono. Por favor, concede los permisos.");
+            }
+        });
+
+        btnDetener.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btnGrabar.style.display = 'flex';
+                btnDetener.style.display = 'none';
+                input.placeholder = "Escribe un mensaje...";
+                input.disabled = false;
+            }
+        });
+
+        function enviarAudio(blob) {
+            const formData = new FormData();
+            formData.append('audio', blob, 'audio.webm');
+            
+            fetch(enviarUrl, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            });
+        }
     </script>
 
 </body>
