@@ -407,17 +407,25 @@ def chat_view(request, producto_id):
 
 import threading
 
-def _analizar_mensaje_background(mensaje_id, contenido, producto_id, pusher_client_obj):
+def _analizar_mensaje_background(mensaje_id, contenido, audio_bytes, producto_id, pusher_client_obj):
     from django.db import connection
     try:
         import google.generativeai as genai
         import json
         model = genai.GenerativeModel('gemini-flash-latest')
-        prompt = f"""Analiza el siguiente mensaje de un chat de intercambios. Determina si el mensaje contiene intentos de estafa, peticiones de tarjetas de crédito, o amenazas explícitas. 
-Responde con un JSON estricto en este formato: {{"seguro": true/false, "motivo": "razón si no es seguro o vacío"}}
-Mensaje a analizar: "{contenido}"
+        prompt = """Analiza el siguiente mensaje de un chat de intercambios (puede ser texto o audio). Determina si el mensaje contiene intentos de estafa, peticiones de tarjetas de crédito, o amenazas explícitas. 
+Responde con un JSON estricto en este formato: {"seguro": true/false, "motivo": "razón si no es seguro o vacío"}
 """
-        response = model.generate_content(prompt)
+        inputs = [prompt]
+        if audio_bytes:
+            inputs.append({
+                "mime_type": "audio/webm",
+                "data": audio_bytes
+            })
+        if contenido:
+            inputs.append(f'Mensaje de texto a analizar: "{contenido}"')
+
+        response = model.generate_content(inputs)
         texto_respuesta = response.text.replace('```json', '').replace('```', '').strip()
         ia_data = json.loads(texto_respuesta)
         es_seguro = ia_data.get('seguro', True)
@@ -446,11 +454,15 @@ def enviar_mensaje(request, producto_id):
             data = json.loads(request.body)
             contenido = data.get('mensaje', '').strip()
             audio_url = None
+            audio_bytes = None
         else:
             contenido = request.POST.get('mensaje', '').strip()
             audio_file = request.FILES.get('audio')
             audio_url = None
+            audio_bytes = None
             if audio_file:
+                audio_bytes = audio_file.read()
+                audio_file.seek(0)
                 import cloudinary.uploader
                 resultado = cloudinary.uploader.upload(audio_file, resource_type='video')
                 audio_url = resultado['secure_url']
@@ -502,10 +514,9 @@ def enviar_mensaje(request, producto_id):
             'url': f'/chat/{producto_id}/'
         })
 
-        # 3. Lanzar hilo de IA en segundo plano (solo si hay contenido de texto)
-        if contenido:
-            t = threading.Thread(target=_analizar_mensaje_background, args=(mensaje_obj.id, contenido, producto_id, pusher_client))
-            t.start()
+        # 3. Lanzar hilo de IA en segundo plano (para texto o audio)
+        t = threading.Thread(target=_analizar_mensaje_background, args=(mensaje_obj.id, contenido, audio_bytes, producto_id, pusher_client))
+        t.start()
 
         return JsonResponse({'status': 'ok'})
 
