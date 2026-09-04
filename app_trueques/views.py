@@ -193,7 +193,10 @@ Genera un JSON con este formato:
             })
         except Exception as e:
             print("Error analizando imagen:", e)
-            return JsonResponse({'error': str(e)}, status=500)
+            error_msg = str(e)
+            if '429' in error_msg or 'Quota exceeded' in error_msg:
+                return JsonResponse({'error': 'Has alcanzado el límite gratuito de peticiones de la IA. Por favor, espera un minuto e intenta de nuevo.'}, status=429)
+            return JsonResponse({'error': 'Error interno al analizar la imagen. Intenta de nuevo más tarde.'}, status=500)
     return JsonResponse({'error': 'Mala petición'}, status=400)
 
 
