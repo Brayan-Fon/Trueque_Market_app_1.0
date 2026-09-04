@@ -166,7 +166,7 @@ def analizar_imagen_ia(request):
             imagen_file = request.FILES['imagen']
             imagen_pil = Image.open(imagen_file)
             
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-flash-latest')
             prompt = """Analiza la imagen de este producto para un mercado de trueques.
 Genera un JSON con este formato:
 {
@@ -418,7 +418,7 @@ def enviar_mensaje(request, producto_id):
         es_seguro = True
         advertencia_ia = ""
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-flash-latest')
             prompt = f"""Analiza el siguiente mensaje de un chat de intercambios. Determina si el mensaje contiene intentos de estafa, peticiones de tarjetas de crédito, o amenazas explícitas. 
 Responde con un JSON estricto en este formato: {{"seguro": true/false, "motivo": "razón si no es seguro o vacío"}}
 Mensaje a analizar: "{contenido}"
