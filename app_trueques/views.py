@@ -405,6 +405,40 @@ def chat_view(request, producto_id):
     return render(request, 'app_trueques/chat.html', context)
 
 
+import threading
+
+def _analizar_mensaje_background(mensaje_id, contenido, producto_id, pusher_client_obj):
+    from django.db import connection
+    try:
+        import google.generativeai as genai
+        import json
+        model = genai.GenerativeModel('gemini-flash-latest')
+        prompt = f"""Analiza el siguiente mensaje de un chat de intercambios. Determina si el mensaje contiene intentos de estafa, peticiones de tarjetas de crédito, o amenazas explícitas. 
+Responde con un JSON estricto en este formato: {{"seguro": true/false, "motivo": "razón si no es seguro o vacío"}}
+Mensaje a analizar: "{contenido}"
+"""
+        response = model.generate_content(prompt)
+        texto_respuesta = response.text.replace('```json', '').replace('```', '').strip()
+        ia_data = json.loads(texto_respuesta)
+        es_seguro = ia_data.get('seguro', True)
+        advertencia_ia = ia_data.get('motivo', '')
+
+        if not es_seguro:
+            from app_trueques.models import Mensaje
+            mensaje = Mensaje.objects.get(id=mensaje_id)
+            mensaje.es_seguro = False
+            mensaje.advertencia_ia = advertencia_ia
+            mensaje.save()
+
+            pusher_client_obj.trigger(f'chat-{producto_id}', 'alerta-seguridad', {
+                'mensaje_id': str(mensaje_id),
+                'advertencia_ia': advertencia_ia
+            })
+    except Exception as e:
+        print("Error Guardián IA Background:", e)
+    finally:
+        connection.close()
+
 @login_required
 def enviar_mensaje(request, producto_id):
     if request.method == 'POST':
@@ -413,24 +447,6 @@ def enviar_mensaje(request, producto_id):
 
         if not contenido:
             return JsonResponse({'error': 'Mensaje vacío'}, status=400)
-
-        # --- GUARDIÁN DE IA ---
-        es_seguro = True
-        advertencia_ia = ""
-        try:
-            model = genai.GenerativeModel('gemini-flash-latest')
-            prompt = f"""Analiza el siguiente mensaje de un chat de intercambios. Determina si el mensaje contiene intentos de estafa, peticiones de tarjetas de crédito, o amenazas explícitas. 
-Responde con un JSON estricto en este formato: {{"seguro": true/false, "motivo": "razón si no es seguro o vacío"}}
-Mensaje a analizar: "{contenido}"
-"""
-            response = model.generate_content(prompt)
-            texto_respuesta = response.text.replace('```json', '').replace('```', '').strip()
-            ia_data = json.loads(texto_respuesta)
-            es_seguro = ia_data.get('seguro', True)
-            advertencia_ia = ia_data.get('motivo', '')
-        except Exception as e:
-            print("Error Guardián IA:", e)
-        # --- FIN GUARDIÁN ---
 
         producto = get_object_or_404(Producto, id=producto_id)
         propietario = producto.propietario
@@ -447,21 +463,35 @@ Mensaje a analizar: "{contenido}"
         if not otro_usuario:
             return JsonResponse({'error': 'No se encontró receptor'}, status=400)
 
-        Mensaje.objects.create(
+        # Crear mensaje por defecto seguro
+        mensaje_obj = Mensaje.objects.create(
             emisor=request.user,
             receptor=otro_usuario,
             producto=producto,
             contenido=contenido,
-            es_seguro=es_seguro,
-            advertencia_ia=advertencia_ia
+            es_seguro=True,
+            advertencia_ia=""
         )
 
+        # 1. Enviar evento al chat local inmediatamente
         pusher_client.trigger(f'chat-{producto_id}', 'nuevo-mensaje', {
+            'id': str(mensaje_obj.id),
             'mensaje': contenido,
             'emisor': request.user.username,
-            'es_seguro': es_seguro,
-            'advertencia_ia': advertencia_ia
+            'es_seguro': True,
+            'advertencia_ia': ""
         })
+
+        # 2. Enviar evento de notificación global al receptor
+        pusher_client.trigger(f'user-{otro_usuario.id}', 'nueva-notificacion', {
+            'titulo': f'Nuevo mensaje de {request.user.username}',
+            'mensaje': contenido,
+            'url': f'/chat/{producto_id}/'
+        })
+
+        # 3. Lanzar hilo de IA en segundo plano
+        t = threading.Thread(target=_analizar_mensaje_background, args=(mensaje_obj.id, contenido, producto_id, pusher_client))
+        t.start()
 
         return JsonResponse({'status': 'ok'})
 

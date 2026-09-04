@@ -34,7 +34,7 @@
         <!-- Historial de mensajes -->
         <div class="chat-mensajes" id="chat-mensajes">
             {% for mensaje in mensajes %}
-                <div class="mensaje {% if mensaje.emisor == request.user %}propio{% else %}otro{% endif %}">
+                <div class="mensaje {% if mensaje.emisor == request.user %}propio{% else %}otro{% endif %}" id="mensaje-{{ mensaje.id }}">
                     <span class="mensaje-usuario">{{ mensaje.emisor.username }}</span>
                     <p class="mensaje-contenido">{{ mensaje.contenido }}</p>
                     {% if not mensaje.es_seguro %}
@@ -86,6 +86,7 @@
             const div = document.createElement('div');
             const esMio = data.emisor === usuarioActual;
             div.classList.add('mensaje', esMio ? 'propio' : 'otro');
+            if (data.id) div.id = `mensaje-${data.id}`;
 
             const ahora = new Date();
             const hora = ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0');
@@ -104,6 +105,19 @@
 
             contenedor.appendChild(div);
             contenedor.scrollTop = contenedor.scrollHeight;
+        });
+
+        // Escuchar actualizaciones de seguridad de la IA en segundo plano
+        channel.bind('alerta-seguridad', function(data) {
+            const msgDiv = document.getElementById(`mensaje-${data.mensaje_id}`);
+            if (msgDiv) {
+                const p = msgDiv.querySelector('.mensaje-contenido');
+                const alerta = document.createElement('div');
+                alerta.className = 'alerta-seguridad fade-in';
+                alerta.innerHTML = `⚠️ Guardián IA: ${data.advertencia_ia}`;
+                p.parentNode.insertBefore(alerta, p.nextSibling);
+                contenedor.scrollTop = contenedor.scrollHeight;
+            }
         });
 
         // Enviar mensaje

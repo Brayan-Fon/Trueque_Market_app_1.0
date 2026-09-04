@@ -1,0 +1,94 @@
+<div id="toast-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+{% if user.is_authenticated %}
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script>
+    (function() {
+        const userId = "{{ user.id }}";
+        
+        // Evitar doble inicialización si la vista ya usa Pusher
+        if (typeof window.globalPusher === 'undefined') {
+            // Usando las llaves del proyecto
+            window.globalPusher = new Pusher("f101b2a33c5689a793de", {
+                cluster: "us2"
+            });
+        }
+        
+        const channel = window.globalPusher.subscribe(`user-${userId}`);
+        
+        channel.bind('nueva-notificacion', function(data) {
+            // No mostrar notificación si ya estamos en ese chat
+            if (window.location.pathname === data.url) return;
+
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'notificacion-toast fade-up';
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>🔔 ${data.titulo}</strong>
+                    <button onclick="this.parentElement.parentElement.remove()">✕</button>
+                </div>
+                <div class="toast-body">${data.mensaje}</div>
+                <a href="${data.url}" class="toast-link">Ver chat →</a>
+            `;
+            container.appendChild(toast);
+
+            // Auto ocultar después de 6 segundos
+            setTimeout(() => {
+                if(toast.parentElement) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 400);
+                }
+            }, 6000);
+        });
+    })();
+</script>
+
+<style>
+.notificacion-toast {
+    background: var(--white, #fff);
+    border: 1px solid var(--border, rgba(0,0,0,0.1));
+    border-left: 4px solid var(--green, #2D5016);
+    border-radius: var(--radius-sm, 8px);
+    padding: 14px 18px;
+    width: 320px;
+    box-shadow: var(--shadow-lg, 0 12px 40px rgba(0,0,0,0.1));
+    transition: opacity 0.3s ease;
+}
+.toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--text, #111);
+}
+.toast-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-soft, #888);
+}
+.toast-header button:hover {
+    color: var(--red, #C0392B);
+}
+.toast-body {
+    font-size: 13px;
+    color: var(--text-mid, #555);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.toast-link {
+    font-size: 13px;
+    color: var(--green, #2D5016);
+    font-weight: 600;
+    text-decoration: none;
+}
+.toast-link:hover {
+    text-decoration: underline;
+}
+</style>
+{% endif %}
