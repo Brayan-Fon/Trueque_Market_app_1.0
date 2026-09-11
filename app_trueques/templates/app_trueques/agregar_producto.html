@@ -156,22 +156,50 @@
             </div>
 
             <div class="form-group">
-                <label for="imagenes">Imágenes del producto (Máx 5)</label>
-                <div class="ia-upload-group">
-                    <input type="file" id="imagenes" name="imagenes" accept="image/*" multiple="multiple" max="5">
-                    <button type="button" id="btn-ia-analizar" class="btn-ia">✨ Autocompletar con IA</button>
+                <label>Imágenes del producto (Máx 5)</label>
+                
+                <!-- Dropzone Personalizado -->
+                <div class="dropzone-area" id="dropzone-area" style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s; background-color: #f9fafb; margin-top: 8px; position: relative;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+                    <h3 style="font-size: 16px; color: #374151; margin-bottom: 4px;">Haz clic aquí para seleccionar fotos</h3>
+                    <p style="font-size: 13px; color: #6b7280;">Puedes subir hasta 5 imágenes. La primera será la portada.</p>
+                    
+                    <input type="file" id="imagenes" name="imagenes" accept="image/*" multiple="multiple" max="5" style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;">
                 </div>
-                <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Puedes seleccionar varias fotos (mantén presionada la tecla Ctrl/Cmd). La primera será la portada.</p>
-                <p id="ia-status" style="font-size: 13px; margin-top: 5px; display: none; font-weight: 500;"></p>
+
+                <!-- Botón IA -->
+                <div style="margin-top: 12px; text-align: right;">
+                    <button type="button" id="btn-ia-analizar" class="btn-ia" style="width: auto; padding: 10px 20px;">✨ Autocompletar con IA</button>
+                    <p id="ia-status" style="font-size: 13px; margin-top: 5px; display: none; font-weight: 500;"></p>
+                </div>
                 
                 <!-- Contenedor para vista previa de imágenes -->
-                <div id="preview-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
+                <div id="preview-container" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px;"></div>
             </div>
 
             <script>
+                const dropzoneArea = document.getElementById('dropzone-area');
+                const fileInput = document.getElementById('imagenes');
+                const previewContainer = document.getElementById('preview-container');
+
+                // Efectos visuales de arrastrar
+                fileInput.addEventListener('dragenter', () => {
+                    dropzoneArea.style.borderColor = 'var(--green)';
+                    dropzoneArea.style.backgroundColor = 'var(--cream)';
+                });
+                
+                fileInput.addEventListener('dragleave', () => {
+                    dropzoneArea.style.borderColor = '#d1d5db';
+                    dropzoneArea.style.backgroundColor = '#f9fafb';
+                });
+                
+                fileInput.addEventListener('drop', () => {
+                    dropzoneArea.style.borderColor = '#d1d5db';
+                    dropzoneArea.style.backgroundColor = '#f9fafb';
+                });
+
                 // Script para vista previa de múltiples imágenes
-                document.getElementById('imagenes').addEventListener('change', function(event) {
-                    const previewContainer = document.getElementById('preview-container');
+                fileInput.addEventListener('change', function(event) {
                     previewContainer.innerHTML = ''; // Limpiar previsualizaciones anteriores
                     
                     const files = event.target.files;
@@ -188,11 +216,11 @@
                             reader.onload = function(e) {
                                 const imgWrapper = document.createElement('div');
                                 imgWrapper.style.position = 'relative';
-                                imgWrapper.style.width = '80px';
-                                imgWrapper.style.height = '80px';
-                                imgWrapper.style.borderRadius = '10px';
+                                imgWrapper.style.width = '90px';
+                                imgWrapper.style.height = '90px';
+                                imgWrapper.style.borderRadius = '12px';
                                 imgWrapper.style.overflow = 'hidden';
-                                imgWrapper.style.border = '2px solid ' + (i === 0 ? 'var(--green)' : 'transparent');
+                                imgWrapper.style.border = '3px solid ' + (i === 0 ? 'var(--green)' : 'transparent');
                                 imgWrapper.style.boxShadow = 'var(--shadow-sm)';
                                 
                                 const img = document.createElement('img');
@@ -209,11 +237,12 @@
                                     badge.style.bottom = '0';
                                     badge.style.left = '0';
                                     badge.style.right = '0';
-                                    badge.style.background = 'rgba(30, 59, 17, 0.8)';
+                                    badge.style.background = 'rgba(30, 59, 17, 0.9)';
                                     badge.style.color = 'white';
-                                    badge.style.fontSize = '9px';
+                                    badge.style.fontSize = '10px';
+                                    badge.style.fontWeight = 'bold';
                                     badge.style.textAlign = 'center';
-                                    badge.style.padding = '2px 0';
+                                    badge.style.padding = '4px 0';
                                     imgWrapper.appendChild(badge);
                                 }
                                 
@@ -271,7 +300,7 @@
                 </div>
 
                 <!-- MAPA PREVIEW -->
-                <div id="mapa-preview" style="display:none; height:250px; border-radius:12px; margin-top:14px;"></div>
+                <div id="mapa-preview" style="display:none; height:250px; border-radius:12px; margin-top:14px; z-index: 1;"></div>
             </div>
 
             <button type="submit" class="btn-submit" id="btn-publicar">✅ Publicar producto</button>
@@ -316,14 +345,15 @@
 
             if (!mapa) {
                 mapa = L.map('mapa-preview').setView([lat, lng], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
+                // Usamos CartoDB Positron en lugar de OSM puro para evitar el error 403
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap contributors & © CARTO'
                 }).addTo(mapa);
 
                 circulo = L.circle([lat, lng], {
                     radius: 1000,
-                    color: '#3b6d11',
-                    fillColor: '#a8d878',
+                    color: 'var(--green)',
+                    fillColor: 'var(--green-light)',
                     fillOpacity: 0.25,
                     weight: 2
                 }).addTo(mapa)

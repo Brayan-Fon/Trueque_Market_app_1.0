@@ -87,9 +87,69 @@
             </div>
         </div>
 
+        <!-- MAPA DE ZONA -->
+        <div class="detalle-mapa">
+            <h3>📍 Zona del producto</h3>
+            {% if producto.latitud and producto.longitud %}
+                <p id="zona" style="margin: 10px 0; color: #555; font-size: 14px;">🔍 Obteniendo zona...</p>
+                <p style="font-size: 12px; color: #999; margin-bottom: 8px;">🔒 Se muestra una zona aproximada para proteger la privacidad del vendedor.</p>
+                <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 8px; z-index: 1;"></div>
+            {% else %}
+                <p class="sin-ubicacion">⚠️ Este producto no tiene zona registrada.</p>
+            {% endif %}
+        </div>
     </main>
 
-    <!-- La zona del mapa fue eliminada según la solicitud del usuario para darle más espacio a las imágenes -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    {% if producto.latitud and producto.longitud %}
+    <script>
+        const lat = parseFloat("{{ producto.latitud }}".replace(',', '.'));
+        const lng = parseFloat("{{ producto.longitud }}".replace(',', '.'));
+
+        const mapa = L.map('mapa').setView([lat, lng], 13);
+
+        // Usamos CartoDB Positron en lugar de OSM puro para evitar el error 403
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors & © <a href="https://carto.com/attributions">CARTO</a>'
+        }).addTo(mapa);
+
+        L.circle([lat, lng], {
+            radius: 1000,
+            color: 'var(--green)',
+            fillColor: 'var(--green-light)',
+            fillOpacity: 0.25,
+            weight: 2
+        }).addTo(mapa)
+          .bindPopup('<b>{{ producto.nombre|escapejs }}</b><br>📍 Zona aproximada')
+          .openPopup();
+
+        // Obtener nombre del barrio
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es&zoom=13`)
+        .then(r => r.json())
+        .then(data => {
+            const zonaEl = document.getElementById('zona');
+            if (data && data.address) {
+                const addr = data.address;
+                let zona = '';
+                if (addr.suburb) zona += addr.suburb;
+                else if (addr.quarter) zona += addr.quarter;
+                else if (addr.neighbourhood) zona += addr.neighbourhood;
+
+                if (addr.city || addr.town || addr.village) {
+                    zona += (zona ? ', ' : '') + (addr.city || addr.town || addr.village);
+                }
+                if (addr.state) zona += ', ' + addr.state;
+
+                zonaEl.innerHTML = zona ? `📍 Zona: <strong>${zona}</strong>` : `📍 Zona: <strong>${data.display_name.split(',').slice(-3).join(',').trim()}</strong>`;
+            } else {
+                zonaEl.innerHTML = '📍 Zona no disponible';
+            }
+        }).catch(() => {
+            document.getElementById('zona').innerHTML = '📍 No se pudo obtener la zona';
+        });
+    </script>
+    {% endif %}
 
 </body>
 </html>
