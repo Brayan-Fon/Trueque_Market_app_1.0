@@ -163,7 +163,68 @@
                 </div>
                 <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Puedes seleccionar varias fotos (mantén presionada la tecla Ctrl/Cmd). La primera será la portada.</p>
                 <p id="ia-status" style="font-size: 13px; margin-top: 5px; display: none; font-weight: 500;"></p>
+                
+                <!-- Contenedor para vista previa de imágenes -->
+                <div id="preview-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
             </div>
+
+            <script>
+                // Script para vista previa de múltiples imágenes
+                document.getElementById('imagenes').addEventListener('change', function(event) {
+                    const previewContainer = document.getElementById('preview-container');
+                    previewContainer.innerHTML = ''; // Limpiar previsualizaciones anteriores
+                    
+                    const files = event.target.files;
+                    if (files.length > 5) {
+                        alert('Has seleccionado más de 5 imágenes. Solo se subirán las primeras 5.');
+                    }
+                    
+                    const limit = Math.min(files.length, 5);
+                    
+                    for (let i = 0; i < limit; i++) {
+                        const file = files[i];
+                        if (file && file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const imgWrapper = document.createElement('div');
+                                imgWrapper.style.position = 'relative';
+                                imgWrapper.style.width = '80px';
+                                imgWrapper.style.height = '80px';
+                                imgWrapper.style.borderRadius = '10px';
+                                imgWrapper.style.overflow = 'hidden';
+                                imgWrapper.style.border = '2px solid ' + (i === 0 ? 'var(--green)' : 'transparent');
+                                imgWrapper.style.boxShadow = 'var(--shadow-sm)';
+                                
+                                const img = document.createElement('img');
+                                img.src = e.target.result;
+                                img.style.width = '100%';
+                                img.style.height = '100%';
+                                img.style.objectFit = 'cover';
+                                
+                                // Etiqueta de portada para la primera imagen
+                                if (i === 0) {
+                                    const badge = document.createElement('span');
+                                    badge.innerText = 'Portada';
+                                    badge.style.position = 'absolute';
+                                    badge.style.bottom = '0';
+                                    badge.style.left = '0';
+                                    badge.style.right = '0';
+                                    badge.style.background = 'rgba(30, 59, 17, 0.8)';
+                                    badge.style.color = 'white';
+                                    badge.style.fontSize = '9px';
+                                    badge.style.textAlign = 'center';
+                                    badge.style.padding = '2px 0';
+                                    imgWrapper.appendChild(badge);
+                                }
+                                
+                                imgWrapper.appendChild(img);
+                                previewContainer.appendChild(imgWrapper);
+                            }
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                });
+            </script>
 
             <!-- Coordenadas ocultas -->
             <input type="hidden" name="latitud" id="latitud">
