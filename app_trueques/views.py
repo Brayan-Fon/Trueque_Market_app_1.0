@@ -135,12 +135,15 @@ def agregar_producto_view(request):
         from .models import ProductoImagen
 
         imagenes_archivos = request.FILES.getlist('imagenes')
-        imagen_principal = None
+        urls_subidas = []
 
-        # Si se subieron imágenes, la primera será la portada
+        # Subir todas las imágenes a Cloudinary una sola vez
         if imagenes_archivos:
-            resultado_principal = cloudinary.uploader.upload(imagenes_archivos[0])
-            imagen_principal = resultado_principal['secure_url']
+            for arch in imagenes_archivos:
+                resultado = cloudinary.uploader.upload(arch)
+                urls_subidas.append(resultado['secure_url'])
+
+        imagen_principal = urls_subidas[0] if urls_subidas else None
 
         producto = Producto.objects.create(
             nombre=nombre,
@@ -152,14 +155,12 @@ def agregar_producto_view(request):
             longitud=longitud,
         )
 
-        # Guardar todas las imágenes (incluyendo la principal) en la galería
-        if imagenes_archivos:
-            for arch in imagenes_archivos:
-                resultado = cloudinary.uploader.upload(arch)
-                ProductoImagen.objects.create(
-                    producto=producto,
-                    imagen_url=resultado['secure_url']
-                )
+        # Guardar las URLs en el modelo ProductoImagen
+        for url in urls_subidas:
+            ProductoImagen.objects.create(
+                producto=producto,
+                imagen_url=url
+            )
 
         messages.success(request, '✅ Producto agregado correctamente')
         return redirect('marketplace')

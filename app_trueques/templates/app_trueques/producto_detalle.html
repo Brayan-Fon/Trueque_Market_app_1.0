@@ -87,85 +87,9 @@
             </div>
         </div>
 
-        <!-- MAPA DE ZONA -->
-        <div class="detalle-mapa">
-            <h3>📍 Zona del producto</h3>
-
-            {% if producto.latitud and producto.longitud %}
-
-                <!-- Barrio/zona obtenida desde Nominatim API -->
-                <p id="zona" style="margin: 10px 0; color: #555; font-size: 14px;">
-                    🔍 Obteniendo zona...
-                </p>
-                <p style="font-size: 12px; color: #999; margin-bottom: 8px;">
-                    🔒 Se muestra una zona aproximada para proteger la privacidad del vendedor.
-                </p>
-
-                <div id="mapa" style="height: 350px; border-radius: 14px; margin-top: 8px;"></div>
-
-            {% else %}
-                <p class="sin-ubicacion">⚠️ Este producto no tiene zona registrada.</p>
-            {% endif %}
-        </div>
-
     </main>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    {% if producto.latitud and producto.longitud %}
-    <script>
-        const lat = parseFloat("{{ producto.latitud }}".replace(',', '.'));
-        const lng = parseFloat("{{ producto.longitud }}".replace(',', '.'));
-
-        // Zoom más alejado para no revelar la ubicación exacta
-        const mapa = L.map('mapa').setView([lat, lng], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mapa);
-
-        // Círculo de zona en vez de marcador exacto
-        L.circle([lat, lng], {
-            radius: 1000,           // 1 km de radio
-            color: '#3b6d11',
-            fillColor: '#a8d878',
-            fillOpacity: 0.25,
-            weight: 2
-        }).addTo(mapa)
-          .bindPopup('<b>{{ producto.nombre }}</b><br>📍 Zona aproximada')
-          .openPopup();
-
-        // Nominatim API — mostrar solo barrio/localidad, no dirección exacta
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es&zoom=13`)
-        .then(r => r.json())
-        .then(data => {
-            const zonaEl = document.getElementById('zona');
-            if (data && data.address) {
-                const addr = data.address;
-
-                // Mostrar solo barrio y ciudad, nunca la calle exacta
-                let zona = '';
-                if (addr.suburb)        zona += addr.suburb;
-                else if (addr.quarter)  zona += addr.quarter;
-                else if (addr.neighbourhood) zona += addr.neighbourhood;
-
-                if (addr.city || addr.town || addr.village) {
-                    zona += (zona ? ', ' : '') + (addr.city || addr.town || addr.village);
-                }
-                if (addr.state) zona += ', ' + addr.state;
-
-                zonaEl.innerHTML = zona
-                    ? `📍 Zona: <strong>${zona}</strong>`
-                    : `📍 Zona: <strong>${data.display_name.split(',').slice(-3).join(',').trim()}</strong>`;
-            } else {
-                zonaEl.innerHTML = '📍 Zona no disponible';
-            }
-        })
-        .catch(() => {
-            document.getElementById('zona').innerHTML = '📍 No se pudo obtener la zona';
-        });
-    </script>
-    {% endif %}
+    <!-- La zona del mapa fue eliminada según la solicitud del usuario para darle más espacio a las imágenes -->
 
 </body>
 </html>
