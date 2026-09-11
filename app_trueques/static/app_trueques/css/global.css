@@ -7,28 +7,35 @@
 
 /* ---- Variables ---- */
 :root {
-  --cream:       #F5F0E8;
-  --cream-dark:  #EDE7D9;
-  --green:       #2D5016;
-  --green-mid:   #3E6B1F;
-  --green-light: #7DAF50;
-  --green-pale:  #E8F0DF;
-  --brown:       #6B4F2A;
-  --text:        #1C1C1A;
-  --text-mid:    #4A4740;
-  --text-soft:   #8A857C;
+  /* Paleta moderna y vibrante */
+  --cream:       #FAFAF8;
+  --cream-dark:  #F2F1EC;
+  --green:       #1E3B11;
+  --green-mid:   #345E1B;
+  --green-light: #8CC25A;
+  --green-pale:  #EAF3E4;
+  --brown:       #5C4526;
+  --text:        #181917;
+  --text-mid:    #4A4D47;
+  --text-soft:   #8C9088;
   --white:       #FFFFFF;
-  --red:         #C0392B;
-  --red-light:   #FDECEA;
-  --border:      rgba(45, 80, 22, 0.15);
-  --shadow-sm:   0 2px 8px rgba(0,0,0,0.06);
-  --shadow-md:   0 6px 24px rgba(0,0,0,0.08);
-  --shadow-lg:   0 12px 40px rgba(0,0,0,0.10);
-  --radius-sm:   8px;
-  --radius-md:   14px;
-  --radius-lg:   22px;
-  --radius-xl:   32px;
-  --transition:  0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  --red:         #D93B3B;
+  --red-light:   #FDEAEA;
+  
+  /* Sombras y bordes Premium */
+  --border:      rgba(30, 59, 17, 0.12);
+  --shadow-sm:   0 4px 16px rgba(30, 59, 17, 0.05);
+  --shadow-md:   0 12px 36px rgba(30, 59, 17, 0.08);
+  --shadow-lg:   0 24px 64px rgba(30, 59, 17, 0.12);
+  
+  /* Radios más orgánicos */
+  --radius-sm:   12px;
+  --radius-md:   18px;
+  --radius-lg:   28px;
+  --radius-xl:   40px;
+  
+  /* Transiciones fluidas (Micro-animaciones) */
+  --transition:  0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* ---- Reset ---- */
