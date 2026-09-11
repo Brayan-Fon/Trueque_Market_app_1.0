@@ -30,12 +30,40 @@
 
         <div class="detalle-card">
 
-            <!-- Imagen del producto -->
-            <div class="detalle-imagen">
-                {% if producto.imagen %}
-                    <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}">
-                {% else %}
-                    <div class="sin-imagen">📦 Sin imagen</div>
+            <!-- Imagen del producto y galería -->
+            <div class="detalle-galeria">
+                <div class="detalle-imagen" id="imagen-principal-container">
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen }}" id="imagen-principal" alt="{{ producto.nombre }}">
+                    {% else %}
+                        <div class="sin-imagen">📦 Sin imagen</div>
+                    {% endif %}
+                </div>
+                
+                {% if producto.imagenes_adicionales.all %}
+                <div class="galeria-miniaturas" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;">
+                    <!-- Portada como miniatura -->
+                    <img src="{{ producto.imagen }}" class="miniatura activa" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; cursor: pointer; border: 2px solid var(--green); opacity: 1; transition: 0.2s;" onclick="cambiarImagen(this, '{{ producto.imagen }}')">
+                    
+                    <!-- Imágenes adicionales -->
+                    {% for img in producto.imagenes_adicionales.all %}
+                        {% if img.imagen_url != producto.imagen %}
+                        <img src="{{ img.imagen_url }}" class="miniatura" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; transition: 0.2s;" onclick="cambiarImagen(this, '{{ img.imagen_url }}')">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <script>
+                    function cambiarImagen(elemento, url) {
+                        document.getElementById('imagen-principal').src = url;
+                        document.querySelectorAll('.miniatura').forEach(el => {
+                            el.style.border = '2px solid transparent';
+                            el.style.opacity = '0.6';
+                        });
+                        elemento.style.border = '2px solid var(--green)';
+                        elemento.style.opacity = '1';
+                    }
+                </script>
                 {% endif %}
             </div>
 

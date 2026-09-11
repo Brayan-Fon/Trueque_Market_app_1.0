@@ -75,6 +75,17 @@ class Producto(models.Model):
 
 
 # ======================
+# IMÁGENES ADICIONALES DE PRODUCTO
+# ======================
+class ProductoImagen(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='imagenes_adicionales')
+    imagen_url = models.CharField(max_length=500)
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Imagen extra para: {self.producto.nombre}"
+
+# ======================
 # TRUEQUES
 # ======================
 class Trueque(models.Model):
