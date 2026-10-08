@@ -607,11 +607,12 @@ def toggle_disponible_view(request, producto_id):
 def chatbot_view(request):
     if request.method == 'POST':
         import json
-        import google.generativeai as genai
         import os
+        import requests
         from .models import Producto
 
-        if not os.environ.get("GEMINI_API_KEY"):
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
             return JsonResponse({'error': 'La clave GEMINI_API_KEY no está configurada.'}, status=400)
             
         try:
@@ -628,7 +629,6 @@ def chatbot_view(request):
             for p in productos:
                 contexto_productos += f"- ID {p.id}: {p.nombre} (Categoría: {p.categoria}). Propietario: {p.propietario.username}. Descripción: {p.descripcion}\n"
 
-            model = genai.GenerativeModel('gemini-flash-latest')
             prompt = f"""Eres "San Reinicio", el guardián y Asistente Inteligente de Trueque Market. 
 Tienes dos tareas principales:
 1. Ayudar al usuario a encontrar productos para intercambiar. NO inventes productos, usa SOLO esta lista de productos reales disponibles:
@@ -644,10 +644,23 @@ Sé amigable, entusiasta y conciso. Responde usando etiquetas HTML básicas para
 
 Mensaje del usuario: "{mensaje_usuario}"
 """
-            response = model.generate_content(prompt)
-            return JsonResponse({'respuesta': response.text})
+            
+            # Usar REST API directo para evitar problemas de conexión gRPC que causan SIGKILL en Gunicorn
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}]
+            }
+            
+            # Timeout de 25s para que falle antes de que Gunicorn lo mate a los 30s
+            response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=25)
+            response.raise_for_status()
+            
+            ia_data = response.json()
+            respuesta_texto = ia_data['candidates'][0]['content']['parts'][0]['text']
+            
+            return JsonResponse({'respuesta': respuesta_texto})
         except Exception as e:
-            print("Error Chatbot IA:", e)
-            return JsonResponse({'error': 'Error interno del bot'}, status=500)
+            print("Error Chatbot IA REST:", e)
+            return JsonResponse({'error': 'La IA está tardando demasiado en responder o está saturada.'}, status=500)
             
     return JsonResponse({'error': 'Bad request'}, status=400)
