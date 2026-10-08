@@ -109,9 +109,9 @@
 
         const mapa = L.map('mapa').setView([lat, lng], 13);
 
-        // Usamos CartoDB Positron en lugar de OSM puro para evitar el error 403
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors & © <a href="https://carto.com/attributions">CARTO</a>'
+        // Volvemos al mapa original de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(mapa);
 
         L.circle([lat, lng], {
