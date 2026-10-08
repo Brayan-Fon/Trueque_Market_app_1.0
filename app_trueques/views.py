@@ -629,13 +629,18 @@ def chatbot_view(request):
                 contexto_productos += f"- ID {p.id}: {p.nombre} (Categoría: {p.categoria}). Propietario: {p.propietario.username}. Descripción: {p.descripcion}\n"
 
             model = genai.GenerativeModel('gemini-flash-latest')
-            prompt = f"""Eres el Asistente Inteligente de Trueque Market. Ayuda al usuario a encontrar productos para intercambiar según lo que ofrece o busca.
-Sé amigable, entusiasta y conciso. NO inventes productos, usa SOLO esta lista de productos reales disponibles:
-
+            prompt = f"""Eres "San Reinicio", el guardián y Asistente Inteligente de Trueque Market. 
+Tienes dos tareas principales:
+1. Ayudar al usuario a encontrar productos para intercambiar. NO inventes productos, usa SOLO esta lista de productos reales disponibles:
 {contexto_productos}
-
 Si recomiendas un producto, SIEMPRE incluye su enlace en formato HTML así: <a href="/producto/ID/" style="color: var(--green); font-weight: bold; text-decoration: underline;">Nombre del producto</a>
-Responde usando etiquetas HTML básicas para dar formato (<b>, <i>, <br>, <a>, <ul>, <li>). NO uses markdown (* o **).
+
+2. Ayudar con reglas y soporte:
+- Reglas: Sé respetuoso, no estafas, el intercambio idealmente debe ser en persona en un lugar seguro.
+- Cómo publicar: Diles que vayan al botón "+ Agregar Producto", llenen la info y suban fotos.
+- Dudas generales: Actúa como el soporte técnico amigable.
+
+Sé amigable, entusiasta y conciso. Responde usando etiquetas HTML básicas para dar formato (<b>, <i>, <br>, <a>, <ul>, <li>). NO uses markdown (* o **).
 
 Mensaje del usuario: "{mensaje_usuario}"
 """
