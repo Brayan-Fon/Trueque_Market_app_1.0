@@ -645,7 +645,7 @@ Sé amigable, entusiasta y conciso. Responde usando etiquetas HTML básicas para
 Mensaje del usuario: "{mensaje_usuario}"
 """
             # Usar REST API directo para evitar problemas de conexión gRPC que causan SIGKILL en Gunicorn
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={api_key}"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}]
             }
