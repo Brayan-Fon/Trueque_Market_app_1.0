@@ -599,3 +599,50 @@ def toggle_disponible_view(request, producto_id):
     estado = "disponible" if producto.disponible else "marcado como vendido/intercambiado"
     messages.success(request, f'✅ Producto "{producto.nombre}" {estado}.')
     return redirect('perfil')
+
+# ======================
+# CHATBOT RECOMENDADOR IA
+# ======================
+@login_required
+def chatbot_view(request):
+    if request.method == 'POST':
+        import json
+        import google.generativeai as genai
+        import os
+        from .models import Producto
+
+        if not os.environ.get("GEMINI_API_KEY"):
+            return JsonResponse({'error': 'La clave GEMINI_API_KEY no está configurada.'}, status=400)
+            
+        try:
+            data = json.loads(request.body)
+            mensaje_usuario = data.get('mensaje', '').strip()
+            
+            if not mensaje_usuario:
+                return JsonResponse({'error': 'Mensaje vacío'}, status=400)
+
+            # Obtener productos disponibles (excluir los del usuario actual)
+            productos = Producto.objects.filter(disponible=True).exclude(propietario=request.user).order_by('-fecha_creacion')[:30]
+            
+            contexto_productos = ""
+            for p in productos:
+                contexto_productos += f"- ID {p.id}: {p.nombre} (Categoría: {p.categoria}). Propietario: {p.propietario.username}. Descripción: {p.descripcion}\n"
+
+            model = genai.GenerativeModel('gemini-flash-latest')
+            prompt = f"""Eres el Asistente Inteligente de Trueque Market. Ayuda al usuario a encontrar productos para intercambiar según lo que ofrece o busca.
+Sé amigable, entusiasta y conciso. NO inventes productos, usa SOLO esta lista de productos reales disponibles:
+
+{contexto_productos}
+
+Si recomiendas un producto, SIEMPRE incluye su enlace en formato HTML así: <a href="/producto/ID/" style="color: var(--green); font-weight: bold; text-decoration: underline;">Nombre del producto</a>
+Responde usando etiquetas HTML básicas para dar formato (<b>, <i>, <br>, <a>, <ul>, <li>). NO uses markdown (* o **).
+
+Mensaje del usuario: "{mensaje_usuario}"
+"""
+            response = model.generate_content(prompt)
+            return JsonResponse({'respuesta': response.text})
+        except Exception as e:
+            print("Error Chatbot IA:", e)
+            return JsonResponse({'error': 'Error interno del bot'}, status=500)
+            
+    return JsonResponse({'error': 'Bad request'}, status=400)
