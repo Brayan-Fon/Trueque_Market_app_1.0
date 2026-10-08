@@ -177,10 +177,14 @@
                 <div id="preview-container" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px;"></div>
             </div>
 
-            <script>
+                <!-- Script de SortableJS para arrastrar y ordenar -->
+                <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+                <script>
                 const dropzoneArea = document.getElementById('dropzone-area');
                 const fileInput = document.getElementById('imagenes');
                 const previewContainer = document.getElementById('preview-container');
+                let selectedFiles = []; // Almacena los archivos seleccionados
 
                 // Efectos visuales de arrastrar
                 fileInput.addEventListener('dragenter', () => {
@@ -198,9 +202,45 @@
                     dropzoneArea.style.backgroundColor = '#f9fafb';
                 });
 
+                // Función para actualizar el input oculto con el nuevo orden
+                function actualizarInputArchivos() {
+                    const dataTransfer = new DataTransfer();
+                    selectedFiles.forEach(file => dataTransfer.items.add(file));
+                    fileInput.files = dataTransfer.files;
+                    actualizarBadges();
+                }
+
+                // Función para actualizar la etiqueta de "Portada"
+                function actualizarBadges() {
+                    const items = previewContainer.children;
+                    for (let i = 0; i < items.length; i++) {
+                        items[i].style.border = '3px solid ' + (i === 0 ? 'var(--green)' : 'transparent');
+                        const oldBadge = items[i].querySelector('.badge-portada');
+                        if (oldBadge) oldBadge.remove();
+                        
+                        if (i === 0) {
+                            const badge = document.createElement('span');
+                            badge.className = 'badge-portada';
+                            badge.innerText = 'Portada';
+                            badge.style.position = 'absolute';
+                            badge.style.bottom = '0';
+                            badge.style.left = '0';
+                            badge.style.right = '0';
+                            badge.style.background = 'rgba(30, 59, 17, 0.9)';
+                            badge.style.color = 'white';
+                            badge.style.fontSize = '10px';
+                            badge.style.fontWeight = 'bold';
+                            badge.style.textAlign = 'center';
+                            badge.style.padding = '4px 0';
+                            badge.style.pointerEvents = 'none';
+                            items[i].appendChild(badge);
+                        }
+                    }
+                }
+
                 // Script para vista previa de múltiples imágenes
                 fileInput.addEventListener('change', function(event) {
-                    previewContainer.innerHTML = ''; // Limpiar previsualizaciones anteriores
+                    previewContainer.innerHTML = '';
                     
                     const files = event.target.files;
                     if (files.length > 5) {
@@ -208,19 +248,22 @@
                     }
                     
                     const limit = Math.min(files.length, 5);
+                    selectedFiles = Array.from(files).slice(0, limit);
+                    actualizarInputArchivos();
                     
-                    for (let i = 0; i < limit; i++) {
-                        const file = files[i];
+                    for (let i = 0; i < selectedFiles.length; i++) {
+                        const file = selectedFiles[i];
                         if (file && file.type.startsWith('image/')) {
                             const reader = new FileReader();
                             reader.onload = function(e) {
                                 const imgWrapper = document.createElement('div');
+                                imgWrapper.dataset.index = i;
                                 imgWrapper.style.position = 'relative';
                                 imgWrapper.style.width = '90px';
                                 imgWrapper.style.height = '90px';
                                 imgWrapper.style.borderRadius = '12px';
                                 imgWrapper.style.overflow = 'hidden';
-                                imgWrapper.style.border = '3px solid ' + (i === 0 ? 'var(--green)' : 'transparent');
+                                imgWrapper.style.cursor = 'grab';
                                 imgWrapper.style.boxShadow = 'var(--shadow-sm)';
                                 
                                 const img = document.createElement('img');
@@ -228,30 +271,31 @@
                                 img.style.width = '100%';
                                 img.style.height = '100%';
                                 img.style.objectFit = 'cover';
-                                
-                                // Etiqueta de portada para la primera imagen
-                                if (i === 0) {
-                                    const badge = document.createElement('span');
-                                    badge.innerText = 'Portada';
-                                    badge.style.position = 'absolute';
-                                    badge.style.bottom = '0';
-                                    badge.style.left = '0';
-                                    badge.style.right = '0';
-                                    badge.style.background = 'rgba(30, 59, 17, 0.9)';
-                                    badge.style.color = 'white';
-                                    badge.style.fontSize = '10px';
-                                    badge.style.fontWeight = 'bold';
-                                    badge.style.textAlign = 'center';
-                                    badge.style.padding = '4px 0';
-                                    imgWrapper.appendChild(badge);
-                                }
+                                img.style.pointerEvents = 'none';
                                 
                                 imgWrapper.appendChild(img);
                                 previewContainer.appendChild(imgWrapper);
+                                
+                                // Actualizar badges al terminar de cargar la imagen
+                                if (i === selectedFiles.length - 1) {
+                                    actualizarBadges();
+                                }
                             }
                             reader.readAsDataURL(file);
                         }
                     }
+                });
+
+                // Inicializar SortableJS
+                new Sortable(previewContainer, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function (evt) {
+                        // Reordenar array de archivos
+                        const itemMoved = selectedFiles.splice(evt.oldIndex, 1)[0];
+                        selectedFiles.splice(evt.newIndex, 0, itemMoved);
+                        actualizarInputArchivos(); // Actualiza el input y la portada
+                    },
                 });
             </script>
 
