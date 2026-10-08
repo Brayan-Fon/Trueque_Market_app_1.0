@@ -203,8 +203,30 @@
                     body: JSON.stringify({ mensaje: text })
                 });
                 
-                const data = await response.json();
                 document.getElementById('typing-indicator')?.remove();
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Server Error:", response.status, errorText);
+                    try {
+                        const errData = JSON.parse(errorText);
+                        appendMessage('❌ Error: ' + (errData.error || 'Fallo en el servidor.'), false);
+                    } catch(e) {
+                        if (response.status === 403) {
+                            appendMessage('❌ Error de seguridad (CSRF). Por favor recarga la página.', false);
+                        } else if (response.status === 500) {
+                            appendMessage('❌ El servidor falló al procesar la respuesta. Revisa los logs de Render.', false);
+                        } else {
+                            appendMessage(`❌ Error HTTP ${response.status}.`, false);
+                        }
+                    }
+                    chatbotInput.disabled = false;
+                    chatbotSend.disabled = false;
+                    chatbotInput.focus();
+                    return;
+                }
+
+                const data = await response.json();
                 
                 if (data.respuesta) {
                     appendMessage(data.respuesta, false);
@@ -213,7 +235,8 @@
                 }
             } catch (err) {
                 document.getElementById('typing-indicator')?.remove();
-                appendMessage('❌ Error de conexión al servidor.', false);
+                console.error("Fetch Catch Error:", err);
+                appendMessage('❌ Error de conexión: ' + err.message, false);
             }
 
             chatbotInput.disabled = false;
