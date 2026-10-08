@@ -109,9 +109,9 @@
 
         const mapa = L.map('mapa').setView([lat, lng], 13);
 
-        // Volvemos al mapa original de OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        // Usamos Esri WorldStreetMap para evitar bloqueos de OSM
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
         }).addTo(mapa);
 
         L.circle([lat, lng], {
