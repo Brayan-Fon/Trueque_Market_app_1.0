@@ -650,8 +650,8 @@ Mensaje del usuario: "{mensaje_usuario}"
                 "contents": [{"parts": [{"text": prompt}]}]
             }
             
-            # Timeout de 25s para que falle antes de que Gunicorn lo mate a los 30s
-            response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=25)
+            # Timeout de 90s (Gunicorn está en 120s) para dar tiempo a la IA si genera textos largos
+            response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=90)
             response.raise_for_status()
             
             ia_data = response.json()
