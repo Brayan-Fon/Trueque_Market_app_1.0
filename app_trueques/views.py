@@ -644,22 +644,59 @@ Sé amigable, entusiasta y conciso. Responde usando etiquetas HTML básicas para
 
 Mensaje del usuario: "{mensaje_usuario}"
 """
-            # Usar REST API directo para evitar problemas de conexión gRPC que causan SIGKILL en Gunicorn
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={api_key}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}]
-            }
-            
-            # Timeout de 90s (Gunicorn está en 120s) para dar tiempo a la IA si genera textos largos
-            response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=90)
-            response.raise_for_status()
-            
-            ia_data = response.json()
-            respuesta_texto = ia_data['candidates'][0]['content']['parts'][0]['text']
-            
-            return JsonResponse({'respuesta': respuesta_texto})
+            # Modelos candidatos en orden de velocidad y estabilidad con fallback ante errores 503 o timeouts
+            modelos_candidatos = [
+                "gemini-3.5-flash",
+                "gemini-3-flash-preview",
+                "gemini-3.1-flash-lite",
+                "gemini-3.8-flash"
+            ]
+
+            respuesta_texto = None
+            ultimo_error = None
+
+            for model in modelos_candidatos:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+                # thinkingBudget=0 desactiva el razonamiento interno y responde de inmediato (1-3s)
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "maxOutputTokens": 800,
+                        "thinkingConfig": {"thinkingBudget": 0}
+                    }
+                }
+                try:
+                    response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=10)
+                    if response.status_code == 400:
+                        # Si el modelo no admite thinkingConfig, reintentar sin él
+                        payload_simple = {
+                            "contents": [{"parts": [{"text": prompt}]}],
+                            "generationConfig": {"maxOutputTokens": 800}
+                        }
+                        response = requests.post(url, json=payload_simple, headers={'Content-Type': 'application/json'}, timeout=10)
+
+                    response.raise_for_status()
+                    ia_data = response.json()
+                    respuesta_texto = ia_data['candidates'][0]['content']['parts'][0]['text']
+
+                    # Limpiar posibles bloques de código markdown si el modelo los incluyó (```html ... ```)
+                    import re
+                    respuesta_texto = re.sub(r'^```html\s*', '', respuesta_texto, flags=re.IGNORECASE)
+                    respuesta_texto = re.sub(r'^```\s*', '', respuesta_texto)
+                    respuesta_texto = re.sub(r'```$', '', respuesta_texto).strip()
+                    break
+                except Exception as e:
+                    ultimo_error = e
+                    print(f"Chatbot IA: modelo {model} no respondió adecuadamente ({e}), probando siguiente modelo...")
+                    continue
+
+            if respuesta_texto:
+                return JsonResponse({'respuesta': respuesta_texto})
+            else:
+                print("Error Chatbot IA REST (todos los modelos agotados):", ultimo_error)
+                return JsonResponse({'error': 'La IA está tardando demasiado en responder o está saturada.'}, status=500)
         except Exception as e:
-            print("Error Chatbot IA REST:", e)
-            return JsonResponse({'error': 'La IA está tardando demasiado en responder o está saturada.'}, status=500)
+            print("Error Chatbot general:", e)
+            return JsonResponse({'error': 'Error interno al procesar la solicitud del chatbot.'}, status=500)
             
     return JsonResponse({'error': 'Bad request'}, status=400)
