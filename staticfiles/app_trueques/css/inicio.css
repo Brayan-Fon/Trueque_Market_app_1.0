@@ -71,17 +71,17 @@
   justify-content: center;
 }
 
-.hero-circle {
-  width: 300px;
-  height: 300px;
-  background: linear-gradient(135deg, var(--green-pale), var(--cream-dark));
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 120px;
-  box-shadow: 0 12px 48px rgba(45,80,22,0.12);
-  border: 2px solid rgba(45,80,22,0.08);
+.hero-image {
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(45,80,22,0.12);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hero-image:hover {
+  transform: translateY(-8px) scale(1.02);
 }
 
 /* Filtros */

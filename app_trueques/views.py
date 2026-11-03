@@ -601,102 +601,214 @@ def toggle_disponible_view(request, producto_id):
     return redirect('perfil')
 
 # ======================
-# CHATBOT RECOMENDADOR IA
+# ASISTENTE DE VOZ E IA (SAN REINICIO)
 # ======================
-@login_required
+def _limpiar_texto_para_voz(html_texto):
+    """Convierte la respuesta HTML del asistente en texto limpio y natural para lectura por voz (TTS)."""
+    import html
+    import re
+
+    if not html_texto:
+        return ""
+
+    texto = html_texto
+    # Reemplazar saltos y cierres de bloque por pausas naturales
+    texto = re.sub(r'<\s*(br|br/|/p|/li|/div|/ul)\s*>', '. ', texto, flags=re.IGNORECASE)
+    # Quitar el resto de etiquetas HTML conservando su texto interno
+    texto = re.sub(r'<[^>]+>', ' ', texto)
+    texto = html.unescape(texto)
+
+    # Quitar URLs sueltas y símbolos de markdown/arrobas/signos + decorativos
+    texto = re.sub(r'https?://\S+', '', texto)
+    texto = re.sub(r'[*_#`~]+', '', texto)
+    texto = re.sub(r'\+\s*(?=\w)', '', texto)
+    texto = re.sub(r'@(\w+)', r'\1', texto)
+    texto = re.sub(r'\bUSD\b', 'dólares', texto)
+
+    # Eliminar emojis y pictogramas sin afectar tildes ni signos en español (áéíóúñü¡¿)
+    texto = re.sub(
+        r'[\U0001F000-\U0001FFFF\u2600-\u27BF\u2300-\u23FF\u2B00-\u2BFF\uFE0F\u200D]+',
+        ' ',
+        texto
+    )
+
+    # Normalizar puntuación y espacios múltiples
+    texto = re.sub(r'\s+', ' ', texto)
+    texto = re.sub(r'\s+([,.;:!?])', r'\1', texto)
+    texto = re.sub(r'(\.\s*){2,}', '. ', texto)
+    texto = re.sub(r'([!?])\s*\.', r'\1', texto)
+    return texto.strip(' .')
+
+
 def chatbot_view(request):
     if request.method == 'POST':
+        import base64
         import json
         import os
+        import re
         import requests
         from .models import Producto
 
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             return JsonResponse({'error': 'La clave GEMINI_API_KEY no está configurada.'}, status=400)
-            
+
         try:
-            data = json.loads(request.body)
-            mensaje_usuario = data.get('mensaje', '').strip()
-            
-            if not mensaje_usuario:
+            mensaje_usuario = ''
+            historial = []
+            pagina_actual = ''
+            audio_b64 = None
+            audio_mime = 'audio/webm'
+
+            if request.content_type and 'multipart/form-data' in request.content_type:
+                mensaje_usuario = request.POST.get('mensaje', '').strip()
+                pagina_actual = request.POST.get('pagina', '').strip()
+                historial_raw = request.POST.get('historial', '[]')
+                try:
+                    historial = json.loads(historial_raw) if historial_raw else []
+                except Exception:
+                    historial = []
+                audio_file = request.FILES.get('audio')
+                if audio_file:
+                    audio_bytes = audio_file.read()
+                    if audio_bytes:
+                        audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+                        audio_mime = audio_file.content_type or 'audio/webm'
+            else:
+                data = json.loads(request.body)
+                mensaje_usuario = data.get('mensaje', '').strip()
+                historial = data.get('historial', []) or []
+                pagina_actual = data.get('pagina', '').strip()
+
+            if not mensaje_usuario and not audio_b64:
                 return JsonResponse({'error': 'Mensaje vacío'}, status=400)
 
-            # Obtener productos disponibles (excluir los del usuario actual)
-            productos = Producto.objects.filter(disponible=True).exclude(propietario=request.user).order_by('-fecha_creacion')[:30]
-            
+            # Obtener productos disponibles (excluir los del usuario actual si inició sesión)
+            productos_qs = Producto.objects.filter(disponible=True)
+            if request.user.is_authenticated:
+                productos_qs = productos_qs.exclude(propietario=request.user)
+            productos = productos_qs.order_by('-fecha_creacion')[:30]
+
             contexto_productos = ""
             for p in productos:
                 contexto_productos += f"- ID {p.id}: {p.nombre} (Categoría: {p.categoria}). Propietario: {p.propietario.username}. Descripción: {p.descripcion}\n"
+            if not contexto_productos:
+                contexto_productos = "(Actualmente no hay productos de otros usuarios publicados).\n"
 
-            prompt = f"""Eres "San Reinicio", el guardián y Asistente Inteligente de Trueque Market. 
+            contexto_historial = ""
+            if isinstance(historial, list) and historial:
+                ultimos = historial[-6:]
+                lineas_hist = []
+                for item in ultimos:
+                    if isinstance(item, dict):
+                        rol = "Usuario" if item.get('role') == 'user' else "San Reinicio"
+                        txt = str(item.get('text', ''))[:250].strip()
+                        if txt:
+                            lineas_hist.append(f"{rol}: {txt}")
+                if lineas_hist:
+                    contexto_historial = "Historial reciente de la conversación:\n" + "\n".join(lineas_hist) + "\n\n"
+
+            nombre_usuario = request.user.username if request.user.is_authenticated else "visitante"
+            instruccion_audio = ""
+            if audio_b64 and not mensaje_usuario:
+                instruccion_audio = (
+                    'El usuario te habló mediante un mensaje de audio adjunto. '
+                    'En la PRIMERA línea escribe exactamente: [USUARIO_DIJO: transcripción exacta y breve de lo que dijo el usuario] '
+                    'y en la siguiente línea escribe tu respuesta.\n'
+                )
+
+            prompt = f"""Eres "San Reinicio", el guardián y Asistente de Voz e IA de Trueque Market. Hablas con {nombre_usuario} (pantalla actual: {pagina_actual or 'Trueque Market'}).
+IMPORTANTE: Tu respuesta se mostrará en el chat y TAMBIÉN será leída en voz alta por síntesis de voz. Por eso:
+- Habla de forma natural, cálida, clara y breve (idealmente de 2 a 4 frases cortas).
+- Responde usando etiquetas HTML sencillas para dar formato visual (<b>, <i>, <br>, <a>, <ul>, <li>). NO uses markdown (* o **).
+
 Tienes dos tareas principales:
-1. Ayudar al usuario a encontrar productos para intercambiar. NO inventes productos, usa SOLO esta lista de productos reales disponibles:
+1. Ayudar al usuario a encontrar productos para intercambiar. NO inventes productos, usa SOLO esta lista real disponible:
 {contexto_productos}
 Si recomiendas un producto, SIEMPRE incluye su enlace en formato HTML así: <a href="/producto/ID/" style="color: var(--green); font-weight: bold; text-decoration: underline;">Nombre del producto</a>
 
-2. Ayudar con reglas y soporte:
-- Reglas: Sé respetuoso, no estafas, el intercambio idealmente debe ser en persona en un lugar seguro.
-- Cómo publicar: Diles que vayan al botón "+ Agregar Producto", llenen la info y suban fotos.
-- Dudas generales: Actúa como el soporte técnico amigable.
+2. Guiar por voz sobre cómo usar Trueque Market y sus reglas:
+- Reglas: Respeto mutuo, cero estafas ni datos bancarios, y hacer los intercambios en persona en lugares públicos seguros.
+- Cómo publicar: Ir al botón "+ Agregar Producto" (o "Publicar artículo"), subir fotos (incluso puede usar "Autocompletar con IA"), elegir zona y guardar.
+- Navegación: Marketplace (/marketplace/) para explorar artículos, Mis Chats (/mis-chats/) para conversar, Mi Perfil (/perfil/) para gestionar publicaciones y Comunidad (/comunidad/) para conocer usuarios.
 
-Sé amigable, entusiasta y conciso. Responde usando etiquetas HTML básicas para dar formato (<b>, <i>, <br>, <a>, <ul>, <li>). NO uses markdown (* o **).
-
-Mensaje del usuario: "{mensaje_usuario}"
+{contexto_historial}{instruccion_audio}Mensaje actual del usuario: "{mensaje_usuario if mensaje_usuario else '(Escucha el audio adjunto)'}"
 """
-            # Modelos candidatos en orden de velocidad y estabilidad con fallback ante errores 503 o timeouts
+            # Modelos candidatos reales en orden de velocidad y estabilidad con fallback automático
             modelos_candidatos = [
-                "gemini-3.5-flash",
                 "gemini-3-flash-preview",
                 "gemini-3.1-flash-lite",
-                "gemini-3.8-flash"
+                "gemini-flash-latest",
+                "gemini-2.5-flash"
             ]
+
+            parts = [{"text": prompt}]
+            if audio_b64:
+                parts.append({
+                    "inline_data": {
+                        "mime_type": audio_mime.split(';')[0].strip(),
+                        "data": audio_b64
+                    }
+                })
 
             respuesta_texto = None
             ultimo_error = None
+            req_headers = {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': api_key
+            }
 
             for model in modelos_candidatos:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-                # thinkingBudget=0 desactiva el razonamiento interno y responde de inmediato (1-3s)
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
                 payload = {
-                    "contents": [{"parts": [{"text": prompt}]}],
+                    "contents": [{"parts": parts}],
                     "generationConfig": {
-                        "maxOutputTokens": 800,
+                        "maxOutputTokens": 600,
                         "thinkingConfig": {"thinkingBudget": 0}
                     }
                 }
                 try:
-                    response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=10)
+                    response = requests.post(url, json=payload, headers=req_headers, timeout=12)
                     if response.status_code == 400:
-                        # Si el modelo no admite thinkingConfig, reintentar sin él
                         payload_simple = {
-                            "contents": [{"parts": [{"text": prompt}]}],
-                            "generationConfig": {"maxOutputTokens": 800}
+                            "contents": [{"parts": parts}],
+                            "generationConfig": {"maxOutputTokens": 600}
                         }
-                        response = requests.post(url, json=payload_simple, headers={'Content-Type': 'application/json'}, timeout=10)
+                        response = requests.post(url, json=payload_simple, headers=req_headers, timeout=12)
 
                     response.raise_for_status()
                     ia_data = response.json()
                     respuesta_texto = ia_data['candidates'][0]['content']['parts'][0]['text']
 
-                    # Limpiar posibles bloques de código markdown si el modelo los incluyó (```html ... ```)
-                    import re
+                    # Limpiar posibles bloques markdown si el modelo los incluyó
                     respuesta_texto = re.sub(r'^```html\s*', '', respuesta_texto, flags=re.IGNORECASE)
                     respuesta_texto = re.sub(r'^```\s*', '', respuesta_texto)
                     respuesta_texto = re.sub(r'```$', '', respuesta_texto).strip()
                     break
                 except Exception as e:
-                    ultimo_error = e
-                    print(f"Chatbot IA: modelo {model} no respondió adecuadamente ({e}), probando siguiente modelo...")
+                    ultimo_error = f"{type(e).__name__}: status={getattr(getattr(e, 'response', None), 'status_code', 'N/A')}"
+                    print(f"Asistente de Voz IA: modelo {model} no respondió adecuadamente ({ultimo_error}), probando siguiente modelo...")
                     continue
 
             if respuesta_texto:
-                return JsonResponse({'respuesta': respuesta_texto})
+                transcripcion = None
+                match_trans = re.search(r'\[USUARIO_DIJO:\s*(.*?)\]\s*', respuesta_texto, flags=re.DOTALL)
+                if match_trans:
+                    transcripcion = match_trans.group(1).strip()
+                    respuesta_texto = respuesta_texto[:match_trans.start()] + respuesta_texto[match_trans.end():]
+                    respuesta_texto = respuesta_texto.strip()
+
+                texto_voz = _limpiar_texto_para_voz(respuesta_texto)
+                return JsonResponse({
+                    'respuesta': respuesta_texto,
+                    'texto_voz': texto_voz,
+                    'transcripcion': transcripcion
+                })
             else:
                 print("Error Chatbot IA REST (todos los modelos agotados):", ultimo_error)
                 return JsonResponse({'error': 'La IA está tardando demasiado en responder o está saturada.'}, status=500)
         except Exception as e:
             print("Error Chatbot general:", e)
-            return JsonResponse({'error': 'Error interno al procesar la solicitud del chatbot.'}, status=500)
-            
+            return JsonResponse({'error': 'Error interno al procesar la solicitud del asistente de voz.'}, status=500)
+
     return JsonResponse({'error': 'Bad request'}, status=400)

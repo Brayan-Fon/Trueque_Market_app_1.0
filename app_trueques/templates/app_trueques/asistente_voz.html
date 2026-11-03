@@ -1,0 +1,984 @@
+{% load static %}
+<!-- ASISTENTE DE VOZ E IA FLOTANTE: SAN REINICIO -->
+<style>
+    .sr-widget {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 365px;
+        max-width: calc(100vw - 28px);
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 9999;
+        transform: translateY(140%) scale(0.95);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.25s ease;
+        font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+        border: 1px solid rgba(46, 77, 31, 0.15);
+    }
+    .sr-widget.sr-open {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .sr-header {
+        background: linear-gradient(135deg, #2e4d1f 0%, #1e3513 100%);
+        color: #ffffff;
+        padding: 13px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+    .sr-header-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .sr-avatar-wrap {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+    }
+    .sr-avatar-wrap img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid #ffffff;
+        object-fit: cover;
+    }
+    .sr-speaking-ring {
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid #86efac;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .sr-widget.sr-is-speaking .sr-speaking-ring {
+        opacity: 1;
+        animation: srPulseRing 1.2s infinite ease-out;
+    }
+    .sr-title-group {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+    .sr-title {
+        font-weight: 700;
+        font-size: 15px;
+        color: #ffffff;
+    }
+    .sr-subtitle {
+        font-size: 11.5px;
+        color: #dcfce7;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 2px;
+    }
+    .sr-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .sr-icon-btn {
+        background: rgba(255, 255, 255, 0.14);
+        border: none;
+        color: #ffffff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        transition: background 0.2s, transform 0.15s;
+        padding: 0;
+    }
+    .sr-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.26);
+        transform: scale(1.05);
+    }
+    .sr-icon-btn.sr-muted {
+        background: rgba(239, 68, 68, 0.35);
+    }
+    .sr-messages {
+        height: 340px;
+        max-height: 55vh;
+        overflow-y: auto;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 14px;
+        background: #f8f7f4;
+    }
+    .sr-msg-row {
+        display: flex;
+        flex-direction: column;
+        max-width: 90%;
+    }
+    .sr-msg-row.sr-user {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+    .sr-msg-row.sr-bot {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+    .sr-bubble {
+        padding: 11px 13px;
+        border-radius: 14px;
+        line-height: 1.45;
+        word-wrap: break-word;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    .sr-msg-row.sr-user .sr-bubble {
+        background: #2e4d1f;
+        color: #ffffff;
+        border-bottom-right-radius: 4px;
+    }
+    .sr-msg-row.sr-bot .sr-bubble {
+        background: #ffffff;
+        color: #1f2937;
+        border: 1px solid #e5e7eb;
+        border-bottom-left-radius: 4px;
+    }
+    .sr-msg-row.sr-bot .sr-bubble a {
+        color: #2e4d1f !important;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+    .sr-speak-replay {
+        margin-top: 4px;
+        background: none;
+        border: none;
+        color: #4b5563;
+        font-size: 11.5px;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.15s, color 0.15s;
+    }
+    .sr-speak-replay:hover {
+        background: #e5e7eb;
+        color: #111827;
+    }
+    .sr-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+    }
+    .sr-chip {
+        background: #ede9df;
+        border: 1px solid #dad4c4;
+        color: #2e4d1f;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .sr-chip:hover {
+        background: #dfd9c8;
+    }
+    .sr-voice-banner {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 14px;
+        background: #fef2f2;
+        border-top: 1px solid #fecaca;
+        color: #991b1b;
+        font-size: 12.5px;
+        font-weight: 600;
+    }
+    .sr-voice-banner.sr-active {
+        display: flex;
+    }
+    .sr-eq {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        height: 16px;
+    }
+    .sr-eq span {
+        display: block;
+        width: 3px;
+        height: 6px;
+        background: #dc2626;
+        border-radius: 2px;
+        animation: srEqBounce 0.8s infinite ease-in-out;
+    }
+    .sr-eq span:nth-child(2) { animation-delay: 0.15s; }
+    .sr-eq span:nth-child(3) { animation-delay: 0.3s; }
+    .sr-eq span:nth-child(4) { animation-delay: 0.45s; }
+    .sr-input-bar {
+        padding: 10px 12px;
+        border-top: 1px solid #eeeeee;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+    }
+    .sr-mic-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: none;
+        background: #eef5eb;
+        color: #2e4d1f;
+        border: 1.5px solid #2e4d1f;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+    .sr-mic-btn:hover {
+        background: #2e4d1f;
+        color: #ffffff;
+    }
+    .sr-mic-btn.sr-listening {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: #ffffff;
+        animation: srMicPulse 1.2s infinite;
+    }
+    .sr-text-input {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 13px;
+        border: 1px solid #d1d5db;
+        border-radius: 20px;
+        outline: none;
+        font-size: 13.5px;
+        font-family: inherit;
+        transition: border-color 0.2s;
+    }
+    .sr-text-input:focus {
+        border-color: #2e4d1f;
+    }
+    .sr-send-btn {
+        background: #2e4d1f;
+        color: #ffffff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13.5px;
+        transition: background 0.2s, opacity 0.2s;
+        flex-shrink: 0;
+    }
+    .sr-send-btn:hover {
+        background: #223a17;
+    }
+    .sr-send-btn:disabled, .sr-mic-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+    /* Botón flotante principal */
+    .sr-fab-wrap {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9998;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .sr-fab-wrap.sr-hidden {
+        transform: scale(0);
+        opacity: 0;
+        pointer-events: none;
+    }
+    .sr-fab-label {
+        background: #ffffff;
+        color: #1f2937;
+        border: 1px solid rgba(46, 77, 31, 0.2);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .sr-fab {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 3px solid #2e4d1f;
+        box-shadow: 0 6px 18px rgba(46, 77, 31, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: transform 0.2s ease;
+    }
+    .sr-fab:hover {
+        transform: scale(1.06);
+    }
+    .sr-fab img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .sr-fab-mic-badge {
+        position: absolute;
+        bottom: -3px;
+        right: -3px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #2e4d1f;
+        color: #ffffff;
+        border: 2px solid #ffffff;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    @media (max-width: 520px) {
+        .sr-fab-label { display: none; }
+        .sr-widget { right: 14px; bottom: 14px; width: calc(100vw - 28px); }
+    }
+    @keyframes srMicPulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+        70% { box-shadow: 0 0 0 11px rgba(220, 38, 38, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    @keyframes srPulseRing {
+        0% { transform: scale(0.95); opacity: 0.9; }
+        100% { transform: scale(1.25); opacity: 0; }
+    }
+    @keyframes srEqBounce {
+        0%, 100% { height: 5px; }
+        50% { height: 15px; }
+    }
+</style>
+
+<div id="sr-widget" class="sr-widget" role="dialog" aria-label="Asistente de Voz San Reinicio">
+    <div class="sr-header">
+        <div class="sr-header-info">
+            <div class="sr-avatar-wrap">
+                <img src="{% static 'app_trueques/img/san_reinicio.jpg' %}" alt="San Reinicio">
+                <span class="sr-speaking-ring"></span>
+            </div>
+            <div class="sr-title-group">
+                <span class="sr-title">San Reinicio</span>
+                <span class="sr-subtitle" id="sr-status-label">🎙️ Asistente de Voz IA</span>
+            </div>
+        </div>
+        <div class="sr-header-actions">
+            <button type="button" id="sr-voice-toggle" class="sr-icon-btn" title="Activar o silenciar respuesta por voz">🔊</button>
+            <button type="button" id="sr-clear-btn" class="sr-icon-btn" title="Reiniciar conversación">↺</button>
+            <button type="button" id="sr-close-btn" class="sr-icon-btn" title="Cerrar asistente" style="font-size: 20px;">&times;</button>
+        </div>
+    </div>
+
+    <div id="sr-messages" class="sr-messages"></div>
+
+    <div id="sr-voice-banner" class="sr-voice-banner">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="sr-eq"><span></span><span></span><span></span><span></span></div>
+            <span id="sr-voice-banner-text">Escuchando... habla ahora</span>
+        </div>
+        <button type="button" id="sr-stop-listen-btn" style="background:#dc2626;color:#fff;border:none;border-radius:12px;padding:3px 10px;font-size:11.5px;cursor:pointer;font-weight:700;">Listo</button>
+    </div>
+
+    <div class="sr-input-bar">
+        <button type="button" id="sr-mic-btn" class="sr-mic-btn" title="Hablar por micrófono">🎙️</button>
+        <input type="text" id="sr-input" class="sr-text-input" placeholder="Toca 🎙️ para hablar o escribe..." autocomplete="off">
+        <button type="button" id="sr-send-btn" class="sr-send-btn">Enviar</button>
+    </div>
+</div>
+
+<div id="sr-fab-wrap" class="sr-fab-wrap">
+    <span id="sr-fab-label" class="sr-fab-label">🎙️ Habla con San Reinicio</span>
+    <button type="button" id="sr-fab" class="sr-fab" title="Abrir Asistente de Voz San Reinicio">
+        <img src="{% static 'app_trueques/img/san_reinicio.jpg' %}" alt="San Reinicio">
+        <span class="sr-fab-mic-badge">🎙️</span>
+    </button>
+</div>
+
+<script>
+(function() {
+    if (window.__sanReinicioInitialized) return;
+    window.__sanReinicioInitialized = true;
+
+    const API_URL = "{% url 'chatbot' %}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const STORAGE_KEY_HIST = "sr_chat_history_v1";
+    const STORAGE_KEY_VOICE = "sr_voice_enabled_v1";
+
+    const widget = document.getElementById('sr-widget');
+    const fabWrap = document.getElementById('sr-fab-wrap');
+    const fab = document.getElementById('sr-fab');
+    const fabLabel = document.getElementById('sr-fab-label');
+    const closeBtn = document.getElementById('sr-close-btn');
+    const clearBtn = document.getElementById('sr-clear-btn');
+    const voiceToggleBtn = document.getElementById('sr-voice-toggle');
+    const statusLabel = document.getElementById('sr-status-label');
+    const messagesEl = document.getElementById('sr-messages');
+    const micBtn = document.getElementById('sr-mic-btn');
+    const stopListenBtn = document.getElementById('sr-stop-listen-btn');
+    const voiceBanner = document.getElementById('sr-voice-banner');
+    const voiceBannerText = document.getElementById('sr-voice-banner-text');
+    const inputEl = document.getElementById('sr-input');
+    const sendBtn = document.getElementById('sr-send-btn');
+
+    const WELCOME_HTML = '¡Hola! Soy <b>San Reinicio</b> 🎙️🤖, tu asistente de voz en Trueque Market. Toca el botón <b>🎙️</b> para hablarme o escríbeme qué buscas intercambiar.';
+    const WELCOME_VOICE = '¡Hola! Soy San Reinicio, tu asistente de voz en Trueque Market. Toca el micrófono para hablarme o dime qué buscas intercambiar.';
+
+    let voiceEnabled = localStorage.getItem(STORAGE_KEY_VOICE) !== 'false';
+    let history = [];
+    try {
+        history = JSON.parse(sessionStorage.getItem(STORAGE_KEY_HIST) || '[]');
+        if (!Array.isArray(history)) history = [];
+    } catch (e) {
+        history = [];
+    }
+
+    // ==========================
+    // SÍNTESIS DE VOZ (TTS)
+    // ==========================
+    const synth = window.speechSynthesis || null;
+    let preferredVoice = null;
+    let activeReplayBtn = null;
+
+    function pickSpanishVoice() {
+        if (!synth) return;
+        const voices = synth.getVoices() || [];
+        if (!voices.length) return;
+        const esVoices = voices.filter(v => /^es([-_]|$)/i.test(v.lang));
+        if (!esVoices.length) return;
+
+        // Priorizar voces neuronales / naturales y español latinoamericano/colombiano
+        preferredVoice =
+            esVoices.find(v => /natural|online/i.test(v.name) && /es[-_](CO|MX|419|US)/i.test(v.lang)) ||
+            esVoices.find(v => /natural|online/i.test(v.name)) ||
+            esVoices.find(v => /google\s*espa/i.test(v.name)) ||
+            esVoices.find(v => /es[-_](CO|MX|419)/i.test(v.lang)) ||
+            esVoices[0];
+    }
+
+    if (synth) {
+        pickSpanishVoice();
+        if (typeof synth.onvoiceschanged !== 'undefined') {
+            synth.onvoiceschanged = pickSpanishVoice;
+        }
+    }
+
+    function updateVoiceToggleUI() {
+        if (voiceEnabled) {
+            voiceToggleBtn.textContent = '🔊';
+            voiceToggleBtn.classList.remove('sr-muted');
+            voiceToggleBtn.title = 'Voz activada (clic para silenciar)';
+        } else {
+            voiceToggleBtn.textContent = '🔇';
+            voiceToggleBtn.classList.add('sr-muted');
+            voiceToggleBtn.title = 'Voz silenciada (clic para activar)';
+        }
+    }
+    updateVoiceToggleUI();
+
+    function stripHtmlForSpeech(htmlStr) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = (htmlStr || '').replace(/<\s*(br|br\/|\/p|\/li)\s*>/gi, '. ');
+        return (tmp.textContent || tmp.innerText || '')
+            .replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF\uFE0F]/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function stopSpeaking() {
+        if (synth) synth.cancel();
+        widget.classList.remove('sr-is-speaking');
+        statusLabel.textContent = '🎙️ Asistente de Voz IA';
+        if (activeReplayBtn) {
+            activeReplayBtn.innerHTML = '🔊 Escuchar';
+            activeReplayBtn = null;
+        }
+    }
+
+    function speakText(rawText, replayBtnEl, forceSpeak) {
+        if (!synth) return;
+        if (!voiceEnabled && !forceSpeak) return;
+
+        const clean = (rawText || '').trim();
+        if (!clean) return;
+
+        stopSpeaking();
+        pickSpanishVoice();
+
+        // Dividir en frases para evitar cortes largos en Chrome
+        const chunks = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
+        let idx = 0;
+
+        widget.classList.add('sr-is-speaking');
+        statusLabel.textContent = '🔊 Hablando...';
+        if (replayBtnEl) {
+            activeReplayBtn = replayBtnEl;
+            replayBtnEl.innerHTML = '⏹️ Detener';
+        }
+
+        function speakNext() {
+            if (idx >= chunks.length) {
+                widget.classList.remove('sr-is-speaking');
+                statusLabel.textContent = '🎙️ Asistente de Voz IA';
+                if (activeReplayBtn) {
+                    activeReplayBtn.innerHTML = '🔊 Escuchar';
+                    activeReplayBtn = null;
+                }
+                return;
+            }
+            const part = chunks[idx++].trim();
+            if (!part) {
+                speakNext();
+                return;
+            }
+            const utter = new SpeechSynthesisUtterance(part);
+            if (preferredVoice) {
+                utter.voice = preferredVoice;
+                utter.lang = preferredVoice.lang;
+            } else {
+                utter.lang = 'es-CO';
+            }
+            utter.rate = 1.03;
+            utter.pitch = 1.0;
+            utter.onend = speakNext;
+            utter.onerror = () => {
+                widget.classList.remove('sr-is-speaking');
+                statusLabel.textContent = '🎙️ Asistente de Voz IA';
+                if (activeReplayBtn) {
+                    activeReplayBtn.innerHTML = '🔊 Escuchar';
+                    activeReplayBtn = null;
+                }
+            };
+            synth.speak(utter);
+        }
+
+        speakNext();
+    }
+
+    voiceToggleBtn.addEventListener('click', () => {
+        voiceEnabled = !voiceEnabled;
+        localStorage.setItem(STORAGE_KEY_VOICE, voiceEnabled ? 'true' : 'false');
+        if (!voiceEnabled) stopSpeaking();
+        updateVoiceToggleUI();
+    });
+
+    // ==========================
+    // HISTORIAL Y MENSAJES UI
+    // ==========================
+    function saveHistory() {
+        try {
+            sessionStorage.setItem(STORAGE_KEY_HIST, JSON.stringify(history.slice(-16)));
+        } catch (e) {}
+    }
+
+    function appendMessageUI(htmlContent, isUser, voicePlainText) {
+        const row = document.createElement('div');
+        row.className = 'sr-msg-row ' + (isUser ? 'sr-user' : 'sr-bot');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'sr-bubble';
+        if (isUser) {
+            bubble.textContent = htmlContent;
+        } else {
+            bubble.innerHTML = htmlContent;
+        }
+        row.appendChild(bubble);
+
+        let replayBtn = null;
+        if (!isUser && synth) {
+            const spoken = voicePlainText || stripHtmlForSpeech(htmlContent);
+            if (spoken) {
+                replayBtn = document.createElement('button');
+                replayBtn.type = 'button';
+                replayBtn.className = 'sr-speak-replay';
+                replayBtn.innerHTML = '🔊 Escuchar';
+                replayBtn.addEventListener('click', () => {
+                    if (activeReplayBtn === replayBtn) {
+                        stopSpeaking();
+                    } else {
+                        speakText(spoken, replayBtn, true);
+                    }
+                });
+                row.appendChild(replayBtn);
+            }
+        }
+
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return { row, bubble, replayBtn };
+    }
+
+    function renderInitialMessages() {
+        messagesEl.innerHTML = '';
+        appendMessageUI(WELCOME_HTML, false, WELCOME_VOICE);
+
+        if (history.length === 0) {
+            const chipsWrap = document.createElement('div');
+            chipsWrap.className = 'sr-chips';
+            chipsWrap.id = 'sr-quick-chips';
+            [
+                '¿Qué productos hay disponibles?',
+                '¿Cómo publico un artículo?',
+                'Reglas para un trueque seguro'
+            ].forEach(q => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'sr-chip';
+                chip.textContent = q;
+                chip.addEventListener('click', () => {
+                    chipsWrap.remove();
+                    sendTextMessage(q);
+                });
+                chipsWrap.appendChild(chip);
+            });
+            messagesEl.appendChild(chipsWrap);
+        } else {
+            history.forEach(item => {
+                appendMessageUI(item.html || item.text, item.role === 'user', item.voiceText);
+            });
+        }
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    renderInitialMessages();
+
+    clearBtn.addEventListener('click', () => {
+        stopSpeaking();
+        history = [];
+        saveHistory();
+        renderInitialMessages();
+    });
+
+    // ==========================
+    // ABRIR / CERRAR WIDGET
+    // ==========================
+    function openWidget() {
+        widget.classList.add('sr-open');
+        fabWrap.classList.add('sr-hidden');
+        setTimeout(() => inputEl.focus(), 250);
+    }
+
+    function closeWidget() {
+        stopSpeaking();
+        stopListening(true);
+        widget.classList.remove('sr-open');
+        fabWrap.classList.remove('sr-hidden');
+    }
+
+    fab.addEventListener('click', openWidget);
+    fabLabel.addEventListener('click', openWidget);
+    closeBtn.addEventListener('click', closeWidget);
+
+    // ==========================
+    // ENVÍO A GEMINI (TEXTO O AUDIO)
+    // ==========================
+    function setBusy(busy) {
+        inputEl.disabled = busy;
+        sendBtn.disabled = busy;
+        micBtn.disabled = busy;
+    }
+
+    function showTypingIndicator(customText) {
+        const div = document.createElement('div');
+        div.id = 'sr-typing';
+        div.style.cssText = 'color:#6b7280;font-size:12px;align-self:flex-start;padding:4px 8px;font-style:italic;';
+        div.textContent = customText || '✨ San Reinicio está pensando...';
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        document.getElementById('sr-typing')?.remove();
+    }
+
+    async function sendTextMessage(textOverride) {
+        const text = (typeof textOverride === 'string' ? textOverride : inputEl.value).trim();
+        if (!text) return;
+
+        stopSpeaking();
+        document.getElementById('sr-quick-chips')?.remove();
+
+        appendMessageUI(text, true);
+        const recentHistory = history.slice(-6).map(h => ({ role: h.role, text: h.text }));
+        history.push({ role: 'user', text: text, html: text });
+        saveHistory();
+
+        inputEl.value = '';
+        setBusy(true);
+        showTypingIndicator('✨ San Reinicio está preparando tu respuesta...');
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                body: JSON.stringify({
+                    mensaje: text,
+                    historial: recentHistory,
+                    pagina: document.title || window.location.pathname
+                })
+            });
+
+            removeTypingIndicator();
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || !data.respuesta) {
+                const errMsg = data.error || `Error del servidor (${response.status}).`;
+                appendMessageUI('❌ ' + errMsg, false, errMsg);
+            } else {
+                const spoken = data.texto_voz || stripHtmlForSpeech(data.respuesta);
+                const { replayBtn } = appendMessageUI(data.respuesta, false, spoken);
+                history.push({ role: 'assistant', text: spoken, html: data.respuesta, voiceText: spoken });
+                saveHistory();
+                speakText(spoken, replayBtn, false);
+            }
+        } catch (err) {
+            removeTypingIndicator();
+            appendMessageUI('❌ Error de conexión con el asistente.', false, 'Ocurrió un error de conexión.');
+        } finally {
+            setBusy(false);
+            inputEl.focus();
+        }
+    }
+
+    async function sendAudioBlob(blob) {
+        stopSpeaking();
+        document.getElementById('sr-quick-chips')?.remove();
+
+        const userMsgRefs = appendMessageUI('🎙️ Mensaje de voz...', true);
+        const recentHistory = history.slice(-6).map(h => ({ role: h.role, text: h.text }));
+
+        setBusy(true);
+        showTypingIndicator('🎧 Escuchando tu voz...');
+
+        const formData = new FormData();
+        formData.append('audio', blob, 'voz.webm');
+        formData.append('historial', JSON.stringify(recentHistory));
+        formData.append('pagina', document.title || window.location.pathname);
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF_TOKEN },
+                body: formData
+            });
+
+            removeTypingIndicator();
+            const data = await response.json().catch(() => ({}));
+
+            const userSpokenText = data.transcripcion ? `🎙️ "${data.transcripcion}"` : '🎙️ Mensaje de voz';
+            userMsgRefs.bubble.textContent = userSpokenText;
+            history.push({ role: 'user', text: data.transcripcion || '(Mensaje de voz)', html: userSpokenText });
+
+            if (!response.ok || !data.respuesta) {
+                const errMsg = data.error || `Error del servidor (${response.status}).`;
+                appendMessageUI('❌ ' + errMsg, false, errMsg);
+            } else {
+                const spoken = data.texto_voz || stripHtmlForSpeech(data.respuesta);
+                const { replayBtn } = appendMessageUI(data.respuesta, false, spoken);
+                history.push({ role: 'assistant', text: spoken, html: data.respuesta, voiceText: spoken });
+                saveHistory();
+                speakText(spoken, replayBtn, false);
+            }
+        } catch (err) {
+            removeTypingIndicator();
+            appendMessageUI('❌ Error al enviar el audio.', false, 'No pude procesar el audio.');
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    sendBtn.addEventListener('click', () => sendTextMessage());
+    inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendTextMessage();
+        }
+    });
+
+    // ==========================
+    // RECONOCIMIENTO DE VOZ (STT + FALLBACK AUDIO GEMINI)
+    // ==========================
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+    let finalTranscript = '';
+    let cancelCurrentListen = false;
+
+    // Fallback MediaRecorder para navegadores sin SpeechRecognition (ej. Firefox)
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let activeStream = null;
+
+    function updateListeningUI(listening, labelText) {
+        isListening = listening;
+        if (listening) {
+            micBtn.classList.add('sr-listening');
+            micBtn.textContent = '⏹️';
+            micBtn.title = 'Detener y enviar';
+            voiceBanner.classList.add('sr-active');
+            voiceBannerText.textContent = labelText || 'Escuchando... habla ahora';
+            statusLabel.textContent = '🔴 Escuchando tu voz...';
+        } else {
+            micBtn.classList.remove('sr-listening');
+            micBtn.textContent = '🎙️';
+            micBtn.title = 'Hablar por micrófono';
+            voiceBanner.classList.remove('sr-active');
+            if (!widget.classList.contains('sr-is-speaking')) {
+                statusLabel.textContent = '🎙️ Asistente de Voz IA';
+            }
+        }
+    }
+
+    function stopListening(abortOnly) {
+        cancelCurrentListen = !!abortOnly;
+        if (recognition && isListening) {
+            try {
+                if (abortOnly) recognition.abort();
+                else recognition.stop();
+            } catch (e) {}
+        }
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            try { mediaRecorder.stop(); } catch (e) {}
+        }
+        if (abortOnly) {
+            updateListeningUI(false);
+        }
+    }
+
+    async function startListening() {
+        stopSpeaking();
+        cancelCurrentListen = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-CO';
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = false;
+            finalTranscript = '';
+
+            recognition.onstart = () => {
+                updateListeningUI(true, 'Escuchando... habla ahora');
+            };
+
+            recognition.onresult = (event) => {
+                let interim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interim += transcript;
+                    }
+                }
+                const combined = (finalTranscript + interim).trim();
+                inputEl.value = combined;
+                if (combined) {
+                    voiceBannerText.textContent = '🎙️ "' + (combined.length > 34 ? combined.slice(-34) : combined) + '"';
+                }
+            };
+
+            recognition.onerror = (event) => {
+                updateListeningUI(false);
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    appendMessageUI('⚠️ Permiso de micrófono denegado. Habilita el micrófono en tu navegador para hablar conmigo.', false);
+                }
+            };
+
+            recognition.onend = () => {
+                const textToSend = (finalTranscript || inputEl.value).trim();
+                updateListeningUI(false);
+                if (!cancelCurrentListen && textToSend) {
+                    sendTextMessage(textToSend);
+                }
+            };
+
+            try {
+                recognition.start();
+            } catch (e) {
+                updateListeningUI(false);
+            }
+        } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            // Fallback multimodal directo a Gemini si el navegador no soporta Web Speech API
+            try {
+                activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(activeStream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    if (activeStream) {
+                        activeStream.getTracks().forEach(t => t.stop());
+                        activeStream = null;
+                    }
+                    updateListeningUI(false);
+                    if (!cancelCurrentListen && audioChunks.length > 0) {
+                        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                        sendAudioBlob(blob);
+                    }
+                };
+
+                mediaRecorder.start();
+                updateListeningUI(true, 'Grabando voz... toca Listo al terminar');
+            } catch (err) {
+                updateListeningUI(false);
+                appendMessageUI('⚠️ No se pudo acceder al micrófono. Revisa los permisos de tu navegador.', false);
+            }
+        } else {
+            appendMessageUI('⚠️ Tu navegador no soporta entrada de micrófono. Asegúrate de abrir el sitio en HTTPS o localhost.', false);
+        }
+    }
+
+    micBtn.addEventListener('click', () => {
+        if (isListening) {
+            stopListening(false);
+        } else {
+            startListening();
+        }
+    });
+
+    stopListenBtn.addEventListener('click', () => {
+        stopListening(false);
+    });
+})();
+</script>
+
