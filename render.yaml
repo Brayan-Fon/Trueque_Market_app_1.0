@@ -3,8 +3,8 @@ services:
     name: Trueque_Market
     env: python
     plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn --timeout 120 TruequeMarket.wsgi:application"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input"
+    startCommand: "python manage.py migrate --noinput && python create_admin.py && gunicorn --timeout 120 TruequeMarket.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
         value: "3.10.14"

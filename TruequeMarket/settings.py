@@ -84,14 +84,31 @@ TEMPLATES = [
 WSGI_APPLICATION = 'TruequeMarket.wsgi.application'
 
 # ==============================
-# BASE DE DATOS
+# BASE DE DATOS (con respaldo automático si DATABASE_URL caduca)
 # ==============================
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600
-    )
-}
+_default_sqlite_url = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+_env_db_url = os.getenv("DATABASE_URL", "").strip()
+
+if _env_db_url and _env_db_url.startswith(("postgres://", "postgresql://")):
+    try:
+        import psycopg2
+        _conn = psycopg2.connect(_env_db_url, connect_timeout=4)
+        _conn.close()
+        DATABASES = {
+            'default': dj_database_url.parse(_env_db_url, conn_max_age=600)
+        }
+    except Exception as _db_err:
+        print(f"[DB WARNING] DATABASE_URL no disponible ({_db_err}). Usando SQLite de respaldo.")
+        DATABASES = {
+            'default': dj_database_url.parse(_default_sqlite_url, conn_max_age=600)
+        }
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=_default_sqlite_url,
+            conn_max_age=600
+        )
+    }
 
 # ==============================
 # VALIDADORES DE CONTRASEÑA
